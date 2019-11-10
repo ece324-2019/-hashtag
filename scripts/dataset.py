@@ -33,14 +33,14 @@ class instgram_data_set:
                     num_per_user)+' -o ..\crawler\output.json --fetch_hashtags'
                 file_path='../crawler/output.json'
             elif system=='linux':
-                cmd = 'python ../crawler/crawler.py posts_full -u ' + start_userj + ' -n ' + str(
+                cmd = 'python ../crawler/crawler.py posts_full -u ' + start_user + ' -n ' + str(
                     num_per_user) + ' -o ../crawler/output.json --fetch_hashtags'
                 file_path='../crawler/output.json'
             else:
                 print("OS should only be windows or linux")
                 0/0
             os.system(cmd)
-        all_hashtags=[]
+        self.all_hashtags=[]
         with open('../crawler/output.json',errors='ignore', encoding='utf8') as json_file:
             posts = json.load(json_file)
         l=len(posts)
@@ -59,8 +59,8 @@ class instgram_data_set:
             for url in posts[i]['img_urls']:
                 k=0
                 for hashtag in hashtags:
-                    if hashtag not in all_hashtags:
-                        all_hashtags+=[hashtag]
+                    if hashtag not in self.all_hashtags:
+                        self.all_hashtags+=[hashtag]
                     resp = requests.get(url, stream=True)
                     try:
                         local_file = open('../img/'+hashtag+'/'+str(i)+'-'+str(j)+str(k)+'.jpg', 'wb')
@@ -86,7 +86,7 @@ class instgram_data_set:
         #----------the crawling is done and the images are sorted into hashtag folders-----------#
         print("Done downloading and transforming images")
         transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0, 0, 0), (1, 1, 1))])
-        self.train_loader, self.val_loader, self.testinput, self.testlabel = self.preprocessing(transform, batch_size, all_hashtags)
+        self.train_loader, self.val_loader, self.testinput, self.testlabel = self.preprocessing(transform, batch_size, self.all_hashtags)
 
     def preprocessing(self,transform,batch_size,hashtags):
         dataloader = DataLoader(dataset.ImageFolder(root="../img", transform=transform), batch_size=1)
@@ -121,3 +121,4 @@ class instgram_data_set:
 
 
 object=instgram_data_set(start_user='juventus',num_per_user=100,recraw=False,system='windows',batch_size=100)
+pass
