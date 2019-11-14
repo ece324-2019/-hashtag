@@ -120,5 +120,5 @@ class instgram_data_set:
 
 
 
-object=instgram_data_set(start_user='juventus',num_per_user=100,recraw=False,system='windows',batch_size=100)
+object=instgram_data_set(start_user='juventus',num_per_user=100,recraw=True,system='windows',batch_size=100)
 pass
