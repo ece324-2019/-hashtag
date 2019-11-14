@@ -9,7 +9,7 @@ import torch.utils.data as data
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 import torchvision
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, normalize
 from sklearn.model_selection import train_test_split
 import torchvision.datasets as dataset
 import torchvision.transforms as transforms
@@ -25,7 +25,7 @@ class Instagram_Dataset(data.Dataset):
         y = self.label[index]
         return x,y
 
-class instgram_data_set:
+class instagram_data_set:
     def __init__(self,batch_size,start_user,num_per_user,num_user=0,recraw=True,system='windows'):
         if recraw:
             if system=='windows':
@@ -40,53 +40,59 @@ class instgram_data_set:
                 print("OS should only be windows or linux")
                 0/0
             os.system(cmd)
-        self.all_hashtags=[]
-        with open('../crawler/output.json',errors='ignore', encoding='utf8') as json_file:
-            posts = json.load(json_file)
-        l=len(posts)
-        shutil.rmtree('../img',ignore_errors=True)
-        if system=='windows':
-            os.system('mkdir ..\img')
-        else:
-            os.system('mkdir ../img')
-        for i in range(l):
-            try:
-                posts[i]['hashtags'],posts[i]['img_urls']
-            except:
-                continue
-            hashtags=posts[i]['hashtags']
-            j=0
-            for url in posts[i]['img_urls']:
-                k=0
-                for hashtag in hashtags:
-                    if hashtag not in self.all_hashtags:
-                        self.all_hashtags+=[hashtag]
-                    resp = requests.get(url, stream=True)
-                    try:
-                        local_file = open('../img/'+hashtag+'/'+str(i)+'-'+str(j)+str(k)+'.jpg', 'wb')
-                    except:
-                        os.mkdir("../img/"+hashtag)
-                        local_file = open('../img/' + hashtag + '/' + str(i) +'-' + str(j) + str(k) + '.jpg', 'wb')
-                    resp.raw.decode_content = True
-                    shutil.copyfileobj(resp.raw, local_file,length=1024*1024)
-                    local_file.close()
+            self.all_hashtags=[]
+            with open('../crawler/output.json',errors='ignore', encoding='utf8') as json_file:
+                posts = json.load(json_file)
+            l=len(posts)
+            shutil.rmtree('../img',ignore_errors=True)
+            if system=='windows':
+                os.system('mkdir ..\img')
+            else:
+                os.system('mkdir ../img')
+            for i in range(l):
+                try:
+                    posts[i]['hashtags'],posts[i]['img_urls']
+                except:
+                    continue
+                hashtags=posts[i]['hashtags']
+                j=0
+                for url in posts[i]['img_urls']:
+                    k=0
+                    for hashtag in hashtags:
+                        if hashtag not in self.all_hashtags:
+                            self.all_hashtags+=[hashtag]
+                        resp = requests.get(url, stream=True)
+                        try:
+                            local_file = open('../img/'+hashtag+'/'+str(i)+'-'+str(j)+str(k)+'.jpg', 'wb')
+                        except:
+                            os.mkdir("../img/"+hashtag)
+                            local_file = open('../img/' + hashtag + '/' + str(i) +'-' + str(j) + str(k) + '.jpg', 'wb')
+                        resp.raw.decode_content = True
+                        shutil.copyfileobj(resp.raw, local_file,length=1024*1024)
+                        local_file.close()
 
-                    local_file_name = "../img/" + hashtag + '/' + str(i) + '-' + str(j) + str(k) + '.jpg'
-                    im = Image.open(local_file_name)
-                    im = im.resize((200,200),Image.NEAREST)
-                    im.save('../img/' + hashtag + '/' + str(i) +'-' + str(j) + str(k) + '.jpg')
-                    del im
-                    del local_file
-                    del local_file_name
-                    del resp
-                    k+=1
-                j+=1
-            i+=1
-        json_file.close()
+                        local_file_name = "../img/" + hashtag + '/' + str(i) + '-' + str(j) + str(k) + '.jpg'
+                        im = Image.open(local_file_name)
+                        im = im.resize((200,200),Image.NEAREST)
+                        im.save('../img/' + hashtag + '/' + str(i) +'-' + str(j) + str(k) + '.jpg')
+                        del im
+                        del local_file
+                        del local_file_name
+                        del resp
+                        k+=1
+                    j+=1
+                i+=1
+            json_file.close()
+            hashtag_dct = {i: self.all_hashtags[i] for i in range(0, len(self.all_hashtags))}
+            with open('hashtags.json','w') as hashtag_file:
+                json.dump(hashtag_dct,hashtag_file);
+            hashtag_file.close()
         #----------the crawling is done and the images are sorted into hashtag folders-----------#
+        with open('hashtags.json','r') as hashtag_file:
+            self.all_hashtags=json.load(hashtag_file).values()
         print("Done downloading and transforming images")
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0, 0, 0), (1, 1, 1))])
-        self.train_loader, self.val_loader, self.testinput, self.testlabel = self.preprocessing(transform, batch_size, self.all_hashtags)
+        transform = transforms.Compose([transforms.ToTensor()])
+        self.train_loader, self.val_loader = self.preprocessing(transform, batch_size, self.all_hashtags)
 
     def preprocessing(self,transform,batch_size,hashtags):
         dataloader = DataLoader(dataset.ImageFolder(root="../img", transform=transform), batch_size=1)
@@ -97,6 +103,8 @@ class instgram_data_set:
         for i, batch in enumerate(dataloader):
             input, label = batch
             input = input.numpy()
+            input-=input.mean(2).mean(1).mean(0)
+            input/=np.reshape(input,(-1)).std()
             label = np.array([label.numpy()])
             temp = np.zeros((1,len(hashtags)))
             temp[0, label[0, 0]] += 1
@@ -116,9 +124,9 @@ class instgram_data_set:
         test_data_set = Instagram_Dataset(test_data, test_label)
         train_data_loader = DataLoader(train_data_set, batch_size=batch_size, shuffle=True)
         test_data_loader = DataLoader(test_data_set, batch_size=len(test_data_set), shuffle=True)
-        return train_data_loader, test_data_loader, test_data, test_label
+        return train_data_loader, test_data_loader,
 
 
 
-object=instgram_data_set(start_user='juventus',num_per_user=100,recraw=True,system='windows',batch_size=100)
-pass
+#object=instagram_data_set(start_user='juventus',num_per_user=100,recraw=False,system='windows',batch_size=100)
+#pass
