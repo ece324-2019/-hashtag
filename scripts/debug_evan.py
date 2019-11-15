@@ -92,6 +92,7 @@ def get_Dictionaries():
     with open('../data/word_vectors_dict.json', 'w') as fp:
         json.dump(word_vectors_dict, fp)
 def get_statistic():
+def get_text_from_dict:
 
 if __name__ == '__main__':
     # seg = Segmenter(corpus="twitter")

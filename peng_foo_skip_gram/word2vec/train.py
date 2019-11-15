@@ -18,7 +18,7 @@ class Word2Vec:
                  batch_size: int=128,
                  iteration: int=1,
                  initial_lr: float=0.025,
-                 min_count: int=5,
+                 min_count: int=1,
                  sub_sampling_t: float = 1e-5,
                  neg_sampling_t: float = 0.75,
                  neg_sample_count: int = 5,
@@ -62,6 +62,8 @@ class Word2Vec:
             json_data.close()
         keys = sorted(id2word.keys())
         list_of_weigths = []
+        print(len(word_vectors.keys()))
+        print(len(id2word.keys()))
         for key in keys:
             list_of_weigths.append(word_vectors[id2word[key].lower()])
         list_of_weigths = torch.FloatTensor(list_of_weigths)
