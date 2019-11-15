@@ -19,13 +19,10 @@ def measure_acc(outputs, labels):
         output=outputs[i].detach().numpy()
         label=labels[i].squeeze().detach().numpy()
         acc_temp=0
-        count=0
         for j in range(len(output)):
-            if (output[j]>0.5 and label[j]>0.5):# or (output[j]<=0.5 and label[j]<=0.5):
+            if (output[j]>0.5 and label[j]>0.5) or (output[j]<=0.5 and label[j]<=0.5):
                 acc_temp+=1
-            if label[j]>0.5:
-                count+=1
-        acc_temp/=count
+        acc_temp/=len(output)
         acc+=acc_temp
     return acc/len(outputs)
 
