@@ -80,10 +80,14 @@ def get_Dictionaries():
         except KeyError:
             hashtagData.append([])
     flat_list = [item for sublist in hashtagData for item in sublist]
-    one_hot_dict = get_one_hot_from_list(flat_list)
+    # one_hot_dict = get_one_hot_from_list(flat_list)
+    one_hot_dict = {}
+    with open('../data/word2id.json') as json_data:
+        one_hot_dict = json.load(json_data)
+        json_data.close()
     word_vectors_dict = {}
     for item in list(one_hot_dict.keys()):
-        word_vectors_dict[item] = generate_vector_from_hashtags(glove, item).tolist()
+        word_vectors_dict[item.lower()] = generate_vector_from_hashtags(glove, item).tolist()
     with open('../data/one_hot_dict.json', 'w') as fp:
         json.dump(one_hot_dict, fp)
     with open('../data/word_vectors_dict.json', 'w') as fp:
