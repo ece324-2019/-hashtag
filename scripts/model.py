@@ -68,10 +68,7 @@ class Baseline(nn.Module):
         # (these are combined for numerical stability)
 
         return x
-=======
-=======
 
->>>>>>> a290fd7ccf2cd7ce4ebb491f6d906a86a85d3896
 class CNN(nn.Module):
     def __init__(self, kernel_num = 10, fc1_num = 100, output_dim=10):
         super(CNN, self).__init__()

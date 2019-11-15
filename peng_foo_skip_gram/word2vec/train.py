@@ -14,7 +14,7 @@ from matplotlib import pyplot as plt
 class Word2Vec:
     def __init__(self, log_filename: str,
                  output_filename: str,
-                 embedding_dimension: int=300,
+                 embedding_dimension: int=100,
                  batch_size: int=128,
                  iteration: int=1,
                  initial_lr: float=0.025,
@@ -44,7 +44,7 @@ class Word2Vec:
         self.initial_lr = initial_lr
         weight_tensor = self.get_pretrained_weight_tensor()
         self.sg_model = SkipGramModel(len(self.data.vocab), self.embedding_dimension, init_weights = weight_tensor)
-        self.sg_model = SkipGramModel(len(self.data.vocab), self.embedding_dimension, init_weights=None)
+        # self.sg_model = SkipGramModel(len(self.data.vocab), self.embedding_dimension, init_weights=None)
         self.use_cuda = torch.cuda.is_available()
         if self.use_cuda:
             self.sg_model.cuda()
