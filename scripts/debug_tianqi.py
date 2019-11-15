@@ -18,7 +18,15 @@ def measure_acc(outputs, labels):
     for i in range(0, len(outputs)):
         output=outputs[i].detach().numpy()
         label=labels[i].squeeze().detach().numpy()
-        acc+=1-sum(np.multiply(output-label,output-label))/len(output)
+        acc_temp=0
+        count=0
+        for j in range(len(output)):
+            if (output[j]>0.5 and label[j]>0.5):# or (output[j]<=0.5 and label[j]<=0.5):
+                acc_temp+=1
+            if label[j]>0.5:
+                count+=1
+        acc_temp/=count
+        acc+=acc_temp
     return acc/len(outputs)
 
 def compare_with_embeddings(outputs,hashtags):
@@ -27,15 +35,19 @@ def compare_with_embeddings(outputs,hashtags):
     outputs_copy=torch.zeros([len(outputs),len(hashtags)])
     for i in range(len(outputs)):
         for j in range(len(hashtags)):
-            outputs_copy[i,j]=torch.dot(outputs[i],embbeddings[j])
+            try:
+                outputs_copy[i,j]=torch.dot(outputs[i],embbeddings[j])/torch.norm(outputs[i])/torch.norm(embedding_dim[j])
+            except:
+                outputs_copy[i, j] = torch.dot(outputs[i], embbeddings[j])
     return outputs_copy
 batch_size=100
 num_epoch=50
 learning_rate=0.001
+embedding_dim=100
 
-data=instagram_data_set(start_user='passthekimchi',num_per_user=100,recraw=False,system='windows',batch_size=batch_size)
+data=instagram_data_set(start_user='therock',num_per_user=100,recraw=False,system='windows',batch_size=batch_size)
 train_loader, test_loader=data.train_loader,data.val_loader
-model, loss_fnc = CNN(output_dim=300), nn.MSELoss()
+model, loss_fnc = CNN(output_dim=embedding_dim), nn.MSELoss()
 optimizer=optim.Adam(model.parameters(), lr=learning_rate)
 train_acc = []
 train_loss = []
