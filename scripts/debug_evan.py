@@ -92,13 +92,24 @@ def get_Dictionaries():
     with open('../data/word_vectors_dict.json', 'w') as fp:
         json.dump(word_vectors_dict, fp)
 def get_statistic():
-def get_text_from_dict:
+    pass
 
-    if __name__ == '__main__':
-        # seg = Segmenter(corpus="twitter")
-        # glove =  load_glove_model("./pretrained_data/glove.6B.100d.txt")
-        # get_Dictionaries()
-        tim = instgram_data_set(120, "passthekimchi", 180, system='linux')
+def get_text_from_dict():
+    data = None
+    with open('../peng_foo_skip_gram/data/word_vectors_dict.json') as json_data:
+        data = json.load(json_data)
+        json_data.close()
+    fout = open('../peng_foo_skip_gram/word2vec/model_baseline_test.txt', 'w', encoding='utf-8')
+    fout.write('%d %d\n' % (len(data), 100))
+    for wid in data.keys():
+        e = data[wid]
+        e = ' '.join(map(lambda x: str(x), e))
+        fout.write('%s %s\n' % (w, e))
+if __name__ == '__main__':
+    # seg = Segmenter(corpus="twitter")
+    # glove =  load_glove_model("./pretrained_data/glove.6B.100d.txt")
+    # get_Dictionaries()
+    tim = instgram_data_set(120, "passthekimchi", 180, system='linux')
 
 
 
