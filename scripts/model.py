@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-<<<<<<< HEAD
 from torch.nn import init
 import numpy as np
 
@@ -49,7 +48,6 @@ class SkipGramModel(nn.Module):
                 e = ' '.join(map(lambda x: str(x), embedding[wid]))
                 f.write('%s %s\n' % (w, e))
 
-<<<<<<< HEAD
 
 class Baseline(nn.Module):
 
@@ -69,6 +67,7 @@ class Baseline(nn.Module):
 
         return x
 
+
 class CNN(nn.Module):
     def __init__(self, kernel_num = 10, fc1_num = 100, output_dim=10):
         super(CNN, self).__init__()
@@ -87,9 +86,4 @@ class CNN(nn.Module):
         x = x.view(-1, 10 * 9 * 9)
         x = (F.relu(self.fc1(x)))
         x = torch.sigmoid(self.fc2(x))
-<<<<<<< HEAD
         return x
->>>>>>> a290fd7ccf2cd7ce4ebb491f6d906a86a85d3896
-=======
-        return x
->>>>>>> a290fd7ccf2cd7ce4ebb491f6d906a86a85d3896
