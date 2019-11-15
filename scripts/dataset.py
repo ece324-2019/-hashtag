@@ -23,7 +23,6 @@ class Instagram_Dataset(data.Dataset):
         x = self.data[index]
         y = self.label[index]
         return x,y
-<<<<<<< HEAD
 class instagram_data_set:
     def __init__(self,batch_size,start_user,num_per_user,num_user=0,recraw=True,system='windows'):
         if recraw:
@@ -119,8 +118,6 @@ class instagram_data_set:
         test_data_set = Instagram_Dataset(test_data, test_label)
         self.train_loader = DataLoader(train_data_set, batch_size=batch_size, shuffle=True)
         self.val_loader = DataLoader(test_data_set, batch_size=len(test_data_set), shuffle=True)
-=======
-
 class instagram_data_set:
     def __init__(self,batch_size,start_user,num_per_user,num_user=0,recraw=True,system='windows'):
         if recraw:
@@ -182,7 +179,6 @@ class instagram_data_set:
             hashtag_file.close()
             image_file.close()
         #----------the crawling is done and the images are sorted into hashtag folders-----------#
->>>>>>> a290fd7ccf2cd7ce4ebb491f6d906a86a85d3896
 
         with open('hashtags.json','r') as hashtag_file:
             self.all_hashtags=json.load(hashtag_file)
@@ -219,16 +215,6 @@ class instagram_data_set:
         self.train_loader = DataLoader(train_data_set, batch_size=batch_size, shuffle=True)
         self.val_loader = DataLoader(test_data_set, batch_size=len(test_data_set), shuffle=True)
 
-
-
-
-
-
-
-<<<<<<< HEAD
-=======
-
->>>>>>> a290fd7ccf2cd7ce4ebb491f6d906a86a85d3896
         hashtag_file.close()
         image_file.close()
 

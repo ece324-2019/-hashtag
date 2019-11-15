@@ -93,11 +93,11 @@ def get_Dictionaries():
         json.dump(word_vectors_dict, fp)
 def get_statistic():
 
-if __name__ == '__main__':
-    # seg = Segmenter(corpus="twitter")
-    # glove =  load_glove_model("./pretrained_data/glove.6B.100d.txt")
-    # get_Dictionaries()
-    tim = instgram_data_set(120, "passthekimchi", 180, system='linux')
+    if __name__ == '__main__':
+        # seg = Segmenter(corpus="twitter")
+        # glove =  load_glove_model("./pretrained_data/glove.6B.100d.txt")
+        # get_Dictionaries()
+        tim = instgram_data_set(120, "passthekimchi", 180, system='linux')
 
 
 
