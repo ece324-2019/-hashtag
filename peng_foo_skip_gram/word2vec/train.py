@@ -116,6 +116,6 @@ class Word2Vec:
         plt.ylabel("loss")
         plt.show()
 if __name__ == '__main__':
-    w2v = Word2Vec('../data/hashtag_corpus.txt', 'model_test.txt', iteration=10)
+    w2v = Word2Vec('../data/hashtag_corpus.txt', 'model_test.txt', iteration=100)
     w2v.train()
 
