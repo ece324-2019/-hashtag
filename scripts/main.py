@@ -15,6 +15,7 @@ from model import *
 from dataset import *
 from access_word_vector import *
 from train import train
+
 batch_size=100
 num_epoch=50
 learning_rate=0.001

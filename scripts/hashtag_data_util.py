@@ -68,17 +68,7 @@ def get_one_hot_from_list(corpus):
     return oneHotDict
 
 # generate the dictionaries needed
-def get_Dictionaries():
-    data = None
-    hashtagData = []
-    with open('../../crawler/output.json') as json_data:
-        data = json.load(json_data)
-        json_data.close()
-    for post in data:
-        try:
-            hashtagData.append(post["hashtags"])
-        except KeyError:
-            hashtagData.append([])
+def get_Dictionaries(hashtagData):
     flat_list = [item for sublist in hashtagData for item in sublist]
     # one_hot_dict = get_one_hot_from_list(flat_list)
     one_hot_dict = {}
@@ -94,18 +84,18 @@ def get_Dictionaries():
         json.dump(word_vectors_dict, fp)
 
 if __name__ == '__main__':
-    seg = Segmenter(corpus="twitter")
-    glove = load_glove_model("../data/glove.6B.100d.txt")
+    # seg = Segmenter(corpus="twitter")
+    # glove = load_glove_model("../data/glove.6B.100d.txt")
     hashtags = []
-    with open('../../crawler/output.json') as json_data:
+    with open('./images.json') as json_data:
         data = json.load(json_data)
         json_data.close()
-        for post in data:
+        for post in data.keys():
             try:
-                hashtags.append(post["hashtags"])
+                hashtags.append(data[post])
             except KeyError:
                 hashtags.append([])
-    file = open("../data/hashtag_corpus.txt", "w")  # write mode
+    file = open("./Data/hashtag_corpus.txt", "w")  # write mode
     for post in hashtags:
         if post != []:
             line = ""
@@ -113,5 +103,5 @@ if __name__ == '__main__':
                 line = line + tag + " "
             file.write(line)
             file.write("\n")
-    get_Dictionaries()
+    get_Dictionaries(hashtags)
     file.close()

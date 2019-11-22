@@ -10,7 +10,7 @@ from gensim.models.keyedvectors import KeyedVectors
 model = KeyedVectors.load_word2vec_format('./model_test.txt', binary=False)
 model_b = KeyedVectors.load_word2vec_format('./model_test_baseline.txt', binary=False)
 
-word = "sundaycheatmeal"
+word = "veteransday"
 
 
 similarWords = model_b.most_similar(positive=word)

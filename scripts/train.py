@@ -42,7 +42,7 @@ class train:
         for i in range(len(outputs)):
             for j in range(len(hashtags)):
                 try:
-                    outputs_copy[i,j]=torch.dot(outputs[i],embbeddings[j])/torch.norm(outputs[i])/torch.norm(embedding_dim[j])
+                    outputs_copy[i, j]=torch.dot(outputs[i],embbeddings[j])/torch.norm(outputs[i])/torch.norm(embedding_dim[j])
                 except:
                     outputs_copy[i, j] = torch.dot(outputs[i], embbeddings[j])
         return outputs_copy
