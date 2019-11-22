@@ -19,7 +19,9 @@ batch_size=100
 num_epoch=50
 learning_rate=0.001
 embedding_dim=100
-data=instagram_data_set(start_user='therock',num_per_user=100,recraw=False,system='windows',batch_size=batch_size)
+with open('users.txt', 'r') as file:
+    u_list = file.readlines()
+data=instagram_data_set(batch_size=64,username_list=u_list,num_per_user=20,recraw=False)
 train_loader, test_loader = data.train_loader, data.val_loader
 train_model=train(cnn_out_dimention=len(data.all_hashtags),data=data)
 train_model.training()

@@ -19,57 +19,62 @@ class Instagram_Dataset(data.Dataset):
         y = self.label[index]
         return x,y
 class instagram_data_set:
-    def __init__(self,batch_size,start_user,num_per_user,num_user=0,recraw=True,system='windows'):
+    def __init__(self,batch_size,username_list,num_per_user,num_user=0,recraw=True,system='windows'):
         if recraw:
-            if system=='windows':
-                cmd = 'python ..\crawler\crawler.py posts_full -u ' + start_user + ' -n ' + str(
-                    num_per_user)+' -o ..\crawler\output.json --fetch_hashtags'
-                file_path='../crawler/output.json'
-            elif system=='linux':
-                cmd = 'python ../crawler/crawler.py posts_full -u ' + start_user + ' -n ' + str(
-                    num_per_user) + ' -o ../crawler/output.json --fetch_hashtags'
-                file_path='../crawler/output.json'
-            else:
-                print("OS should only be windows or linux")
-            os.system(cmd)
-            self.all_hashtags=[]
-            self.all_images={}
-            with open('../crawler/output.json',errors='ignore', encoding='utf8') as json_file:
-                posts = json.load(json_file)
-            l=len(posts)
-            shutil.rmtree('../img',ignore_errors=True)
-            if system=='windows':
+            shutil.rmtree('../img', ignore_errors=True)
+            if system == 'windows':
                 os.system('mkdir ..\img')
             else:
                 os.system('mkdir ../img')
-            for i in range(l):
-                try:
-                    posts[i]['hashtags'],posts[i]['img_urls']
-                except:
-                    continue
-                hashtags=posts[i]['hashtags']
-                j=0
-                for url in posts[i]['img_urls']:
-                    resp = requests.get(url, stream=True)
-                    local_file = open('../img/'+str(i)+'-'+str(j)+'.jpg', 'wb')
-                    resp.raw.decode_content = True
-                    shutil.copyfileobj(resp.raw, local_file,length=1024*1024)
-                    local_file.close()
-                    local_file_name = "../img/" + str(i) + '-' + str(j) + '.jpg'
-                    self.all_images[local_file_name] = []
-                    im = Image.open(local_file_name)
-                    im = im.resize((200,200),Image.NEAREST)
-                    im.save('../img/' + '/' + str(i) +'-' + str(j) + '.jpg')
-                    for hashtag in hashtags:
-                        if hashtag not in self.all_hashtags:
-                            self.all_hashtags+=[hashtag]
-                        self.all_images[local_file_name]+=[hashtag]
-                    del im
-                    del local_file
-                    del local_file_name
-                    del resp
-                    j+=1
-            json_file.close()
+            self.all_hashtags = []
+            self.all_images = {}
+            k=0
+            for user in username_list:
+                start_user=user[:-1]
+                print(start_user)
+                if system=='windows':
+                    cmd = 'python ..\crawler\crawler.py posts_full -u ' + start_user + ' -n ' + str(
+                        num_per_user)+' -o ..\crawler\output.json --fetch_hashtags'
+                    file_path='../crawler/output.json'
+                elif system=='linux':
+                    cmd = 'python ../crawler/crawler.py posts_full -u ' + start_user + ' -n ' + str(
+                        num_per_user) + ' -o ../crawler/output.json --fetch_hashtags'
+                    file_path='../crawler/output.json'
+                else:
+                    print("OS should only be windows or linux")
+                os.system(cmd)
+                with open('../crawler/output.json',errors='ignore', encoding='utf8') as json_file:
+                    posts = json.load(json_file)
+                l=len(posts)
+                for i in range(l):
+                    try:
+                        posts[i]['hashtags'],posts[i]['img_urls']
+                    except:
+                        continue
+                    hashtags=posts[i]['hashtags']
+                    j=0
+                    for url in posts[i]['img_urls']:
+                        resp = requests.get(url, stream=True)
+                        local_file = open('../img/'+str(k)+'-'+str(i)+'-'+str(j)+'.jpg', 'wb')
+                        resp.raw.decode_content = True
+                        shutil.copyfileobj(resp.raw, local_file,length=1024*1024)
+                        local_file.close()
+                        local_file_name = "../img/" +str(k)+'-'+ str(i) + '-' + str(j) + '.jpg'
+                        self.all_images[local_file_name] = []
+                        im = Image.open(local_file_name)
+                        im = im.resize((200,200),Image.NEAREST)
+                        im.save('../img/' +str(k)+'-'+ str(i) +'-' + str(j) + '.jpg')
+                        for hashtag in hashtags:
+                            if hashtag not in self.all_hashtags:
+                                self.all_hashtags+=[hashtag]
+                            self.all_images[local_file_name]+=[hashtag]
+                        del im
+                        del local_file
+                        del local_file_name
+                        del resp
+                        j+=1
+                json_file.close()
+                k+=1
             hashtag_dct = {self.all_hashtags[i]:i for i in range(0, len(self.all_hashtags))}
             with open('hashtags.json','w') as hashtag_file:
                 json.dump(hashtag_dct,hashtag_file);
@@ -93,6 +98,8 @@ class instagram_data_set:
             im = np.array(im,dtype=float)
             im = np.reshape(im,(3,200,200))
             im -= im.mean(2).mean(1).mean(0)
+            if (np.reshape(im, (-1)).std()==0):
+                continue
             im /= np.reshape(im, (-1)).std()
             label = np.zeros((1,len(self.all_hashtags.values())))
             for hashtag in hashtag_list:
@@ -114,4 +121,6 @@ class instagram_data_set:
         self.train_loader = DataLoader(train_data_set, batch_size=batch_size, shuffle=True)
         self.val_loader = DataLoader(test_data_set, batch_size=len(test_data_set), shuffle=True)
 
-#pass
+#with open('users.txt', 'r') as file:
+#    u_list = file.readlines()
+#data=instagram_data_set(batch_size=64,username_list=u_list,num_per_user=20,recraw=False)

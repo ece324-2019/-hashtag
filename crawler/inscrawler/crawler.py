@@ -219,7 +219,7 @@ class InsCrawler(Logging):
             except RetryException:
                 sys.stderr.write(
                     "\x1b[1;31m"
-                    + "Failed to fetch the post: "
+                        + "Failed to fetch the post: "
                     + cur_key or 'URL not fetched'
                     + "\x1b[0m"
                     + "\n"
