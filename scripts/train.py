@@ -8,6 +8,7 @@ import matplotlib.pyplot as pyplot
 from model import *
 from dataset import *
 from access_word_vector import *
+import hashtag_trainer as ht
 class train:
     def __init__(self,cnn_out_dimention,data,loss_function='MSELoss',model='baseline',lr=0.001,epochs=100):
         self.out_dimention=cnn_out_dimention
@@ -51,8 +52,8 @@ class train:
         return acc/len(outputs)
 
     def compare_with_embeddings(self,outputs,hashtags):
-        #hashtags.dic=returnListOfEmbedding(hashtags)
-        embeddings=returnListOfEmbedding(hashtags)
+        hashtags_dic=ht.generate_dict_of_hashtag()
+        embeddings=hashtags_dic.items()
         embeddings=np.asarray(embeddings)
         embeddings=torch.from_numpy(embeddings)
         outputs_copy=torch.zeros([len(outputs),len(hashtags)])
