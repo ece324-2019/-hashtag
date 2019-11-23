@@ -18,11 +18,12 @@ from train import train
 batch_size=100
 num_epoch=50
 learning_rate=0.001
-embedding_dim=100
-with open('users.txt', 'r') as file:
+embedding_dim=300
+with open('FoodGramers.txt', 'r') as file:
     u_list = file.readlines()
-data=instagram_data_set(batch_size=64,username_list=u_list,num_per_user=20,recraw=False)
+data=instagram_data_set(batch_size=64,username_list=['therock\n'],num_per_user=100,recraw=False)
 train_loader, test_loader = data.train_loader, data.val_loader
-train_model=train(cnn_out_dimention=len(data.all_hashtags),data=data)
+train_model=train(cnn_out_dimention=len(data.all_hashtags),data=data,epochs=30,loss_function='CrossEntropy')
 train_model.training()
 train_model.show_result()
+train_model.save_model()
