@@ -26,8 +26,8 @@ def evaluate(pos_score, neg_score):
     true_negative = corr_neg.sum().item()
 
     accuracy = (true_positive + true_negative)/(tot_positive + tot_negative)
-    sensitivity = true_positive/(true_positive + tot_negative - true_negative)
-    f1 = 2*true_positive/(2*true_positive + tot_positive - true_positive + tot_negative - true_negative)
+    sensitivity = true_positive/(true_positive + tot_negative - true_negative + 0.0000001)
+    f1 = 2*true_positive/(2*true_positive + tot_positive - true_positive + tot_negative - true_negative+ 0.0000001)
     return {"accuracy":accuracy, "sensitivity":sensitivity, "f1":f1}
 
 
@@ -148,23 +148,40 @@ class Word2Vec:
         f1_list = np.array(f1_list)
         iList = np.array(iList)
 
-        plt.title("Loss & Accuracy when training word2Vec")
-        plt.subplot(3, 1, 1)
-        plt.plot(iList, lossList, label="loss")
-        plt.ylabel("loss")
-        plt.subplot(3, 1, 2)
-        plt.plot(accuracy_i_list, accuracy_list, label="accuracy")
-        plt.ylabel("accuracy")
-        plt.subplot(3, 1, 3)
-        plt.plot(accuracy_i_list, f1_list, label="f1")
-        plt.ylabel("f1 score")
-        plt.xlabel("batch")
-        plt.legend()
-        plt.show()
+        # plt.title("Loss & Accuracy when training word2Vec")
+        # plt.subplot(3, 1, 1)
+        # plt.plot(iList, lossList, label="loss")
+        # plt.ylabel("loss")
+        # plt.subplot(3, 1, 2)
+        # plt.plot(accuracy_i_list, accuracy_list, label="accuracy")
+        # plt.ylabel("accuracy")
+        # plt.subplot(3, 1, 3)
+        # plt.plot(accuracy_i_list, f1_list, label="f1")
+        # plt.ylabel("f1 score")
+        # plt.xlabel("batch")
+        # plt.legend()
+        # plt.show()
+        return [iList, lossList, accuracy_i_list, accuracy_list, f1_list]
 
 def train_vectors():
-    w2v = Word2Vec(log_filename="./Data/hashtag_corpus.txt", output_filename="./Data/wordVectors.txt", embedding_dimension = 40, iteration=500)
+    w2v = Word2Vec(log_filename="./Data/hashtag_corpus.txt", output_filename="./Data/wordVectors.txt", embedding_dimension = 100, iteration=10)
     w2v.train()
+def hyper_search():
+    embedding_size = [20, 40, 100, 300]
+    window_size = [3, 5, 10, 20]
+    embedding_size = [20]
+    window_size = [3]
+    out_path = "./Data/vectors/"
+    index = 1
+    for emb_size in embedding_size:
+        for window in window_size:
+            w2v = Word2Vec(log_filename="./Data/hashtag_corpus.txt", output_filename=out_path+str(emb_size)+str(window)+"wordVectors.txt", embedding_dimension = emb_size, iteration=20, half_window_size=window)
+            [iList, lossList, accuracy_i_list, accuracy_list, f1_list] = w2v.train()
+            plt.subplot(len(window_size), len(embedding_size), index)
+            plt.plot(accuracy_i_list, f1_list, label="f1")
+            plt.ylabel("f1")
+            index = index + 1
+    plt.plot
 
 
 def generate_dict_of_hashtag():
@@ -179,11 +196,10 @@ def generate_dict_of_hashtag():
     with open('./Data/hashtag_vector_dict.json', 'w') as outfile:
         json.dump(dict_tags, outfile)
     return dict_tags
-
 if __name__ == '__main__':
-    # gen_corpus()
-    train_vectors()
-    # generate_dict_of_hashtag()
+    gen_corpus()
+    hyper_search()
+    generate_dict_of_hashtag()
 # call this to run all the functions related to hashtag training
 def training():
     gen_corpus()
