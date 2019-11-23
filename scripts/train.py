@@ -1,5 +1,6 @@
 #----Contains all the codes for training----#
 import torch
+import math
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
@@ -12,10 +13,12 @@ class train:
         self.out_dimention=cnn_out_dimention
         if loss_function=="MSELoss":
             self.loss_fnc=nn.MSELoss()
+        if loss_function=="CrossEntropy":
+            self.loss_fnc=nn.functional.binary_cross_entropy_with_logits
         self.model=CNN(output_dim=self.out_dimention)
         self.epochs=epochs
         self.data=data
-        self.model_name=''
+        self.model_name=model
         self.train_acc = []
         self.train_loss = []
         self.valid_acc = []
@@ -25,30 +28,47 @@ class train:
     def measure_acc(self,outputs, labels):
         acc=0
         for i in range(0, len(outputs)):
+            tp = 0
+            tn = 0
+            fp = 0
+            fn = 0
+            beta=1
             output=outputs[i].detach().numpy()
             label=labels[i].squeeze().detach().numpy()
             acc_temp=0
             for j in range(len(output)):
-                if (output[j]>0.5 and label[j]>0.5) or (output[j]<=0.5 and label[j]<=0.5):
-                    acc_temp+=1
-            acc_temp/=len(output)
+                if (output[j]>0.5 and label[j]>0.5):
+                    tp+=1
+                elif(output[j]<=0.5 and label[j]<=0.5):
+                    tn+=1
+                elif(output[j]>=0.5 and label[j]<=0.5):
+                    fp+=1
+                elif(output[j]<=0.5 and label[j]>=0.5):
+                    fn+=1
+            #acc_temp=(1+beta*beta)*tp/((1+beta*beta)*tp+beta*beta*fn+fp)
+            acc_temp=(tp+tn)/(tp+tn+fn+fp)
             acc+=acc_temp
         return acc/len(outputs)
 
     def compare_with_embeddings(self,outputs,hashtags):
-        embbeddings=returnListOfEmbedding(hashtags)
-        embbeddings=torch.FloatTensor(embbeddings)
+        #hashtags.dic=returnListOfEmbedding(hashtags)
+        embeddings=returnListOfEmbedding(hashtags)
+        embeddings=np.asarray(embeddings)
+        embeddings=torch.from_numpy(embeddings)
         outputs_copy=torch.zeros([len(outputs),len(hashtags)])
         for i in range(len(outputs)):
             for j in range(len(hashtags)):
                 try:
-                    outputs_copy[i,j]=torch.dot(outputs[i],embbeddings[j])/torch.norm(outputs[i])/torch.norm(embedding_dim[j])
+                    outputs_copy[i,j]=torch.dot(outputs[i],embeddings[j])/torch.norm(outputs[i])/torch.norm(embeddings[j])
                 except:
-                    outputs_copy[i, j] = torch.dot(outputs[i], embbeddings[j])
+                    outputs_copy[i, j] = torch.dot(outputs[i], embeddings[j])
         return outputs_copy
 
     def training(self):
+        tr_loss = 0
+        tr_acc = 0
         for epoch in range(self.epochs):
+            print("Epoch: ",epoch," loss: ",tr_loss," acc: ",tr_acc)
             tr_loss = 0
             tr_acc = 0
             l = 0
@@ -84,6 +104,7 @@ class train:
                 l += 1
             self.valid_loss += [v_loss / l]
             self.valid_acc += [v_acc / l]
+        pass
     def show_result(self):
         print("train acc: ", self.train_acc[-1], "train loss", self.train_loss[-1])
         print("validate acc: ", self.valid_acc[-1], "validate loss", self.valid_loss[-1])
@@ -113,5 +134,5 @@ class train:
         pyplot.legend(loc='lower right')
         pyplot.xlabel("Epoch")
         pyplot.show()
-    def saveModel(self):
+    def save_model(self):
         torch.save(self.model, 'model_'+self.model_name+'.pt')
