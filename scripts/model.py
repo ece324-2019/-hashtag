@@ -55,12 +55,13 @@ class SkipGramModel(nn.Module):
         # A[1]
         pos_score = torch.mul(emb_u, emb_v).squeeze()
         pos_score = torch.sum(pos_score, dim=1)
+        alt_pos_score = F.sigmoid(pos_score)
         pos_score = F.logsigmoid(pos_score)
 
         neg_score = torch.bmm(emb_neg, emb_u.unsqueeze(2)).squeeze()
+        alt_neg_score = F.sigmoid(-neg_score)
         neg_score = F.logsigmoid(-neg_score)
-
-        return -1 * (torch.sum(pos_score) + torch.sum(neg_score))
+        return [-1 * (torch.sum(pos_score) + torch.sum(neg_score)), alt_pos_score, alt_neg_score]
 
     def save_embedding(self, id2word: dict, file_name: str='./Data/word_vectors.txt', use_cuda: bool=False):
         """

@@ -16,9 +16,21 @@ import json
 from matplotlib import pyplot as plt
 from gensim.models.keyedvectors import KeyedVectors
 
-def evaluate(output, label):
-    print(output.size())
-    print(label.size())
+def evaluate(pos_score, neg_score):
+    corr_pos = (pos_score).squeeze() > 0.5
+    corr_neg = (neg_score).squeeze() > 0.5
+
+    tot_positive = (corr_pos.size()[0])
+    true_positive = (corr_pos.sum().item())
+    tot_negative = corr_neg.size()[0] * corr_neg.size()[1]
+    true_negative = corr_neg.sum().item()
+
+    accuracy = (true_positive + true_negative)/(tot_positive + tot_negative)
+    sensitivity = true_positive/(true_positive + tot_negative - true_negative)
+    f1 = 2*true_positive/(2*true_positive + tot_positive - true_positive + tot_negative - true_negative)
+    return {"accuracy":accuracy, "sensitivity":sensitivity, "f1":f1}
+
+
 
 class Word2Vec:
     def __init__(self, log_filename: str,
@@ -92,6 +104,10 @@ class Word2Vec:
         batch_count = self.iter * approx_pair / self.batch_size
         lossList = []
         iList = []
+        accuracy_i_list = []
+        accuracy_list = []
+        sensitivity_list = []
+        f1_list = []
         for pos_u, pos_v, neg_samples in self.data.gen_batch():
             i += 1
             if self.data.sentence_cursor > self.data.sentence_len * self.iter:
@@ -103,34 +119,51 @@ class Word2Vec:
             neg_v = Variable(torch.LongTensor(neg_samples))
             if self.use_cuda:
                 pos_u, pos_v, neg_v = [i.cuda() for i in (pos_u, pos_v, neg_v)]
-
             # print(len(pos_u), len(pos_v), len(neg_v))
             self.optimizer.zero_grad()
-            loss = self.sg_model.forward(pos_u, pos_v, neg_v)
-            # print(loss)
+            loss_and_posVal_and_negVal = self.sg_model.forward(pos_u, pos_v, neg_v)
+            loss = loss_and_posVal_and_negVal[0]
             loss.backward()
             self.optimizer.step()
             lossList.append(loss.item())
             iList.append(i)
-            # if i % 100 == 0:
+            if i % 100 == 0:
                 # print(loss)
                 # print("step: %d, Loss: %0.8f, lr: %0.6f" % (i, loss.item(), self.optimizer.param_groups[0]['lr']))
-                # evaluate()
+                pos_score = loss_and_posVal_and_negVal[1]
+                neg_score = loss_and_posVal_and_negVal[2]
+                accuracy_i_list.append(i)
+                temp_out = evaluate(pos_score, neg_score)
+                accuracy_list.append(temp_out["accuracy"])
+                f1_list.append(temp_out["f1"])
+                sensitivity_list.append(temp_out["sensitivity"])
             if i % (100000 // self.batch_size) == 0:
                 lr = self.initial_lr * (1.0 - 1.0 * i / batch_count)
                 for param_group in self.optimizer.param_groups:
                     param_group['lr'] = lr
         self.sg_model.save_embedding(self.data.id2word, self.output_filename, self.use_cuda)
         lossList = np.array(lossList)
+        accuracy_list = np.array(accuracy_list)
+        accuracy_i_list = np.array(accuracy_i_list)
+        f1_list = np.array(f1_list)
         iList = np.array(iList)
-        plt.title("Loss when training word2Vec")
-        plt.plot(iList, lossList, label="training")
-        plt.xlabel("Epochs")
+
+        plt.title("Loss & Accuracy when training word2Vec")
+        plt.subplot(3, 1, 1)
+        plt.plot(iList, lossList, label="loss")
         plt.ylabel("loss")
+        plt.subplot(3, 1, 2)
+        plt.plot(accuracy_i_list, accuracy_list, label="accuracy")
+        plt.ylabel("accuracy")
+        plt.subplot(3, 1, 3)
+        plt.plot(accuracy_i_list, f1_list, label="f1")
+        plt.ylabel("f1 score")
+        plt.xlabel("batch")
+        plt.legend()
         plt.show()
 
 def train_vectors():
-    w2v = Word2Vec(log_filename="./Data/hashtag_corpus.txt", output_filename="./Data/wordVectors.txt", embedding_dimension = 40, iteration=7)
+    w2v = Word2Vec(log_filename="./Data/hashtag_corpus.txt", output_filename="./Data/wordVectors.txt", embedding_dimension = 40, iteration=500)
     w2v.train()
 
 
