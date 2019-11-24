@@ -16,12 +16,12 @@ class train:
     def __init__(self,cnn_out_dimention,data,loss_function='MSELoss',model='baseline',lr=0.001,epochs=100):
         self.out_dimention=cnn_out_dimention
         if loss_function=="MSELoss":
-            self.loss_fnc=nn.MSELoss()
+            self.loss_fnc = nn.MSELoss()
         if loss_function=="CrossEntropy":
-            self.loss_fnc=nn.functional.binary_cross_entropy_with_logits
+            self.loss_fnc = nn.functional.binary_cross_entropy_with_logits()
         if loss_function=="cos":
-            self.loss_fuc=nn.CosineEmbeddingLoss
-
+            self.loss_fuc = nn.CosineEmbeddingLoss()
+        print(nn.CosineEmbeddingLoss())
         self.model=CNN(output_dim=self.out_dimention)
         self.epochs=epochs
         self.data=data
@@ -60,8 +60,8 @@ class train:
                     fp+=1
                 elif(output[j]<=0.5 and label[j]>=0.5):
                     fn+=1
-            acc_temp=(1+beta*beta)*tp/((1+beta*beta)*tp+beta*beta*fn+fp)
-            # acc_temp=(tp+tn)/(tp+tn+fn+fp)
+            # acc_temp=(1+beta*beta)*tp/((1+beta*beta)*tp+beta*beta*fn+fp + 0.00000001)
+            acc_temp=(tp+tn)/(tp+tn+fn+fp)
             acc+=acc_temp
         return acc/len(outputs)
     def compare_with_embeddings(self,outputs,hashtags):
@@ -107,11 +107,13 @@ class train:
         tr_loss = 0
         tr_acc = 0
         for epoch in range(self.epochs):
-            print("Epoch: ",epoch," loss: ",tr_loss," acc: ",tr_acc)
+            # print("Epoch: ",epoch," loss: ",tr_loss," acc: ",tr_acc)
             tr_loss = 0
             tr_acc = 0
             l = 0
+            self.model.train()
             for i, batch in enumerate(self.data.train_loader):
+
                 inputs, labels=batch
                 inputs = inputs.type(torch.FloatTensor)
                 hash_labels = labels.type(torch.FloatTensor).squeeze()
@@ -130,9 +132,11 @@ class train:
                 l += 1
             self.train_acc += [tr_acc / l]
             self.train_loss += [tr_loss / l]
+            print('(Training) Epoch: ', epoch, ' loss: ', tr_loss / l, ' acc: ', tr_acc / l)
             v_acc = 0
             v_loss = 0
             l = 0
+            self.model.eval()
             for j, batch in enumerate(self.data.val_loader):
                 inputs, labels=batch
                 inputs = inputs.type(torch.FloatTensor)
@@ -147,6 +151,7 @@ class train:
                 l += 1
             self.valid_loss += [v_loss / l]
             self.valid_acc += [v_acc / l]
+            print('(Validation) Epoch: ', epoch, ' loss: ', v_loss / l, ' acc: ', v_acc / l)
         pass
     def show_result(self):
         print("train acc: ", self.train_acc[-1], "train loss", self.train_loss[-1])

@@ -101,6 +101,7 @@ class train:
                 l += 1
             self.train_acc += [tr_acc / l]
             self.train_loss += [tr_loss / l]
+            print('(Training) Epoch: ',epoch,' loss: ',tr_loss/l,' acc: ',tr_acc/l)
             v_acc = 0
             v_loss = 0
             l = 0
@@ -118,7 +119,6 @@ class train:
                 l += 1
             self.valid_loss += [v_loss / l]
             self.valid_acc += [v_acc / l]
-            print('Epoch: ',epoch,' loss: ',tr_loss,' acc: ',tr_acc)
         pass
     def show_result(self):
         print("train acc: ", self.train_acc[-1], "train loss", self.train_loss[-1])
