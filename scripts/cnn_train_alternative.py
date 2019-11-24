@@ -77,6 +77,8 @@ class train:
                 inputs, labels=batch
                 inputs = inputs.type(torch.FloatTensor)
                 labels = labels.type(torch.FloatTensor)
+                print(labels.size())
+                A[1]
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs)
                 if self.model_name=='cnn':
