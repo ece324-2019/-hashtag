@@ -165,6 +165,7 @@ class Word2Vec:
 
 def train_vectors():
     w2v = Word2Vec(log_filename="./Data/hashtag_corpus.txt", output_filename="./Data/wordVectors.txt", embedding_dimension = 40, half_window_size=5, iteration=200)
+    w2v = Word2Vec(log_filename="./Data/hashtag_corpus.txt", output_filename="./Data/wordVectors.txt", embedding_dimension = 40, iteration=10)
     w2v.train()
 def hyper_search():
     embedding_size = [20, 40, 100, 300]

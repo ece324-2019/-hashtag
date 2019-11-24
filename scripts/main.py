@@ -21,11 +21,10 @@ batch_size=100
 num_epoch=50
 learning_rate=0.001
 embedding_dim=40
-ht.training()
+#ht.training()
 with open('FoodGramers.txt', 'r') as file:
     u_list = file.readlines()
-data=instagram_data_set(batch_size=64,username_list=u_list,num_per_user=3,recraw=False)
-ht.training()
+data=instagram_data_set(batch_size=batch_size,username_list=u_list,num_per_user=3,recraw=False)
 train_loader, test_loader = data.train_loader, data.val_loader
 train_model=train(data=data,epochs=30,loss_function='CrossEntropy',model='cnn')
 train_model.training()

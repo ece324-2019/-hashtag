@@ -320,7 +320,8 @@ def gen_corpus():
                 file.write(line)
                 file.write("\n")
             except:
-                pass
+                file.write("non-english_word")
+                file.write("\n")
     # get_Dictionaries(hashtags)
     file.close()
 if __name__ == '__main__':
