@@ -6,13 +6,29 @@ import numpy as np
 
 
 if __name__ == '__main__':
-    model = KeyedVectors.load_word2vec_format('./Data/wordVectors.txt', binary=False)
-    word = "BronxNY"
+    model0 = KeyedVectors.load_word2vec_format('./Data/vectors/205wordVectors.txt', binary=False)
+    model1 = KeyedVectors.load_word2vec_format('./Data/vectors/405wordVectors.txt', binary=False)
+    model2 = KeyedVectors.load_word2vec_format('./Data/vectors/1003wordVectors.txt', binary=False)
+    model3 = KeyedVectors.load_word2vec_format('./Data/wordVectors.txt', binary=False)
+    word = "interiorphotographer"
 
-    similarWords = model.most_similar(positive=word)
-    print("In the model the hastag #" + word + " is most similar to:")
+    similarWords = model0.most_similar(positive=word)
+    print("In the 20 embedding dimension model the hastag #" + word + " is most similar to:")
     for i in range (0, 5):
         print("#" + similarWords[i][0])
+    similarWords = model1.most_similar(positive=word)
+    print("In the 40 embedding dimension model the hastag #" + word + " is most similar to:")
+    for i in range(0, 5):
+        print("#" + similarWords[i][0])
+    similarWords = model2.most_similar(positive=word)
+    print("In the 100 embedding dimension model the hastag #" + word + " is most similar to:")
+    for i in range(0, 5):
+        print("#" + similarWords[i][0])
+    similarWords = model3.most_similar(positive=word)
+    print("In the chosen model the hastag #" + word + " is most similar to:")
+    for i in range(0, 5):
+        print("#" + similarWords[i][0])
+
 
 def returnListOfEmbedding(listOfHashtag):
     model = KeyedVectors.load_word2vec_format('../peng_foo_skip_gram/word2vec/model_test.txt', binary=False)

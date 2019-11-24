@@ -23,7 +23,7 @@ learning_rate=0.001
 embedding_dim=300
 with open('FoodGramers.txt', 'r') as file:
     u_list = file.readlines()
-data=instagram_data_set(batch_size=64,username_list=['therock\n'],num_per_user=100,recraw=False)
+data = instagram_data_set(batch_size=64,username_list=['therock\n'],num_per_user=100,recraw=False)
 ht.training()
 train_loader, test_loader = data.train_loader, data.val_loader
 train_model=train(cnn_out_dimention=len(data.all_hashtags),data=data,epochs=30,loss_function='CrossEntropy',model='cnn')
