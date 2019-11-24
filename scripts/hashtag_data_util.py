@@ -1,6 +1,5 @@
 import os
 import json
-from ekphrasis.classes.segmenter import Segmenter
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 import sklearn.preprocessing
@@ -317,8 +316,11 @@ def gen_corpus():
             line = ""
             for tag in post:
                 line = line + tag + " "
-            file.write(line)
-            file.write("\n")
+            try:
+                file.write(line)
+                file.write("\n")
+            except:
+                pass
     # get_Dictionaries(hashtags)
     file.close()
 if __name__ == '__main__':

@@ -20,13 +20,14 @@ import hashtag_trainer as ht
 batch_size=100
 num_epoch=50
 learning_rate=0.001
-embedding_dim=300
+embedding_dim=40
+ht.training()
 with open('FoodGramers.txt', 'r') as file:
     u_list = file.readlines()
-data=instagram_data_set(batch_size=64,username_list=['therock\n'],num_per_user=100,recraw=False)
+data=instagram_data_set(batch_size=64,username_list=u_list,num_per_user=3,recraw=False)
 ht.training()
 train_loader, test_loader = data.train_loader, data.val_loader
-train_model=train(cnn_out_dimention=len(data.all_hashtags),data=data,epochs=30,loss_function='CrossEntropy',model='cnn')
+train_model=train(data=data,epochs=30,loss_function='CrossEntropy',model='cnn')
 train_model.training()
 train_model.show_result()
 train_model.save_model()

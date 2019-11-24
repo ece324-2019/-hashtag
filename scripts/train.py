@@ -10,13 +10,17 @@ from dataset import *
 from access_word_vector import *
 import hashtag_trainer as ht
 class train:
-    def __init__(self,cnn_out_dimention,data,loss_function='MSELoss',model='baseline',lr=0.001,epochs=100):
-        self.out_dimention=cnn_out_dimention
+    def __init__(self,data,loss_function='MSELoss',model='cnn',lr=0.001,epochs=100):
+        if model=='cnn':
+            self.out_dimension=40
+        if model=='baseline':
+            self.out_dimension=len(data.all_hashtags)
         if loss_function=="MSELoss":
             self.loss_fnc=nn.MSELoss()
         if loss_function=="CrossEntropy":
             self.loss_fnc=nn.functional.binary_cross_entropy_with_logits
-        self.model=CNN(output_dim=self.out_dimention)
+        self.model=CNN(output_dim=self.out_dimension)
+        self.l=len(data.all_hashtags)
         self.epochs=epochs
         self.data=data
         self.model_name=model
@@ -25,7 +29,14 @@ class train:
         self.valid_acc = []
         self.valid_loss = []
         self.optimizer=optim.Adam(self.model.parameters(), lr=lr)
-
+        hashtags_dic=ht.generate_dict_of_hashtag()
+        for key in self.data.all_hashtags.keys():
+            try:
+                self.data.all_hashtags[key]=hashtags_dic[key]
+            except:
+                self.data.all_hashtags[key]=np.zeros(self.out_dimension)
+        self.embeddings = torch.tensor(np.asarray(list(self.data.all_hashtags.values())))
+        self.embeddings=self.embeddings.type(torch.float32)
     def measure_acc(self,outputs, labels):
         acc=0
         for i in range(0, len(outputs)):
@@ -51,36 +62,36 @@ class train:
             acc+=acc_temp
         return acc/len(outputs)
 
-    def compare_with_embeddings(self,outputs,hashtags):
-        hashtags_dic=ht.generate_dict_of_hashtag()
-        embeddings=hashtags_dic.items()
-        embeddings=np.asarray(embeddings)
-        embeddings=torch.from_numpy(embeddings)
-        outputs_copy=torch.zeros([len(outputs),len(hashtags)])
+    def compare_with_embeddings(self,outputs):
+        outputs_copy=torch.zeros([len(outputs),self.l])
         for i in range(len(outputs)):
-            for j in range(len(hashtags)):
-                try:
-                    outputs_copy[i,j]=torch.dot(outputs[i],embeddings[j])/torch.norm(outputs[i])/torch.norm(embeddings[j])
-                except:
-                    outputs_copy[i, j] = torch.dot(outputs[i], embeddings[j])
+            for j in range(self.l):
+                temp=torch.dot(outputs[i],self.embeddings[j])/torch.norm(outputs[i])/torch.norm(self.embeddings[j])
+                if (not np.isnan(temp.detach())):
+                    outputs_copy[i,j]=temp
+                else:
+                    outputs_copy[i, j] = 0
         return outputs_copy
 
     def training(self):
+        if torch.cuda.is_available():
+            torch.set_default_tensor_type(torch.cuda.FloatTensor)
+        if torch.cuda.is_available():
+            self.model.cuda()
         tr_loss = 0
         tr_acc = 0
         for epoch in range(self.epochs):
-            print("Epoch: ",epoch," loss: ",tr_loss," acc: ",tr_acc)
             tr_loss = 0
             tr_acc = 0
             l = 0
             for i, batch in enumerate(self.data.train_loader):
                 inputs, labels=batch
-                inputs = inputs.type(torch.FloatTensor)
-                labels = labels.type(torch.FloatTensor)
+                inputs = inputs.type(torch.float32)
+                labels = labels.type(torch.float32)
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs)
                 if self.model_name=='cnn':
-                    outputs=self.compare_with_embeddings(outputs,self.data.all_hashtags);
+                    outputs=self.compare_with_embeddings(outputs)
                 loss = self.loss_fnc(outputs.squeeze(), labels.squeeze())
                 loss.backward()
                 self.optimizer.step()
@@ -98,13 +109,16 @@ class train:
                 inputs = inputs.type(torch.FloatTensor)
                 labels = labels.type(torch.FloatTensor)
                 outputs = self.model(inputs)
+                print("model computation")
                 if self.model_name=='cnn':
-                    outputs = self.compare_with_embeddings(outputs,self.data.all_hashtags)
+                    outputs = self.compare_with_embeddings(outputs)
+                print("comparison computation")
                 v_acc += self.measure_acc(outputs, labels)
                 v_loss += self.loss_fnc((outputs.squeeze()), labels.squeeze()).item()
                 l += 1
             self.valid_loss += [v_loss / l]
             self.valid_acc += [v_acc / l]
+            print('Epoch: ',epoch,' loss: ',tr_loss,' acc: ',tr_acc)
         pass
     def show_result(self):
         print("train acc: ", self.train_acc[-1], "train loss", self.train_loss[-1])
