@@ -118,7 +118,7 @@ class train:
                 if self.model_name=='cnn':
                     outputs = self.compare_with_embeddings(outputs)
                 v_acc += self.measure_acc(outputs, labels)
-                v_loss += (self.loss_fnc1(outputs.squeeze(), labels.squeeze())+0.1*self.loss_fnc2(outputs.squeeze(), labels.squeeze())).item()
+                v_loss += (self.loss_fnc1(outputs.squeeze(), labels.squeeze())+0.11*self.loss_fnc2(outputs.squeeze(), labels.squeeze())).item()
                 l += 1
             self.valid_loss += [v_loss / l]
             self.valid_acc += [v_acc / l]
