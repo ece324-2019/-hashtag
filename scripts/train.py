@@ -17,8 +17,9 @@ class train:
             self.out_dimension=len(data.all_hashtags)
         if loss_function=="MSELoss":
             self.loss_fnc=nn.MSELoss()
-        if loss_function=="CrossEntropy":
-            self.loss_fnc=nn.functional.binary_cross_entropy_with_logits
+        if loss_function=="KLDivLoss":
+            self.loss_fnc1=nn.KLDivLoss()
+            self.loss_fnc2 = nn.BCEWithLogitsLoss()
         self.model=CNN(output_dim=self.out_dimension)
         self.l=len(data.all_hashtags)
         self.epochs=epochs
@@ -29,14 +30,15 @@ class train:
         self.valid_acc = []
         self.valid_loss = []
         self.optimizer=optim.Adam(self.model.parameters(), lr=lr)
-        hashtags_dic=ht.generate_dict_of_hashtag()
-        for key in self.data.all_hashtags.keys():
-            try:
-                self.data.all_hashtags[key]=hashtags_dic[key]
-            except:
-                self.data.all_hashtags[key]=np.zeros(self.out_dimension)
-        self.embeddings = torch.tensor(np.asarray(list(self.data.all_hashtags.values())))
-        self.embeddings=self.embeddings.type(torch.float32)
+        if model=='cnn':
+            hashtags_dic=ht.generate_dict_of_hashtag()
+            for key in self.data.all_hashtags.keys():
+                try:
+                    self.data.all_hashtags[key]=hashtags_dic[key]
+                except:
+                    self.data.all_hashtags[key]=np.zeros(self.out_dimension)
+            self.embeddings = torch.tensor(np.asarray(list(self.data.all_hashtags.values())))
+            self.embeddings=self.embeddings.type(torch.float32)
     def measure_acc(self,outputs, labels):
         acc=0
         for i in range(0, len(outputs)):
@@ -44,7 +46,7 @@ class train:
             tn = 0
             fp = 0
             fn = 0
-            beta=1
+            beta=3
             output=outputs[i].detach().numpy()
             label=labels[i].squeeze().detach().numpy()
             acc_temp=0
@@ -57,23 +59,22 @@ class train:
                     fp+=1
                 elif(output[j]<=0.5 and label[j]>=0.5):
                     fn+=1
-            #acc_temp=(1+beta*beta)*tp/((1+beta*beta)*tp+beta*beta*fn+fp)
-            acc_temp=(tp+tn)/(tp+tn+fn+fp)
+            acc_temp=(tp*(1+beta*beta))/(tp*(1+beta*beta)+beta*fp+fn)
+            #cc_temp=(tp+tn)/(tp+tn+fn+fp)
             acc+=acc_temp
+        print(tp,fp,tn,fn)
         return acc/len(outputs)
 
     def compare_with_embeddings(self,outputs):
         outputs_copy=torch.zeros([len(outputs),self.l])
         for i in range(len(outputs)):
-            for j in range(self.l):
-                temp=torch.dot(outputs[i],self.embeddings[j])/torch.norm(outputs[i])/torch.norm(self.embeddings[j])
-                if (not np.isnan(temp.detach())):
-                    outputs_copy[i,j]=temp
-                else:
-                    outputs_copy[i, j] = 0
+            outputs_copy[i]=nn.functional.cosine_similarity(outputs[i],self.embeddings,dim=-1)
+        #outputs_copy=nn.functional.leaky_relu(outputs_copy*2,0.01)
+        outputs_copy=torch.sigmoid(outputs_copy)
         return outputs_copy
 
     def training(self):
+        print("Start training")
         if torch.cuda.is_available():
             torch.set_default_tensor_type(torch.cuda.FloatTensor)
         if torch.cuda.is_available():
@@ -90,9 +91,12 @@ class train:
                 labels = labels.type(torch.float32)
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs)
+                #print("model computation")
                 if self.model_name=='cnn':
                     outputs=self.compare_with_embeddings(outputs)
-                loss = self.loss_fnc(outputs.squeeze(), labels.squeeze())
+                #print("comparison computation")
+
+                loss = self.loss_fnc1(outputs.squeeze(), labels.squeeze())+self.loss_fnc2(outputs.squeeze(), labels.squeeze())*0.1
                 loss.backward()
                 self.optimizer.step()
 
@@ -101,7 +105,8 @@ class train:
                 l += 1
             self.train_acc += [tr_acc / l]
             self.train_loss += [tr_loss / l]
-            print('(Training) Epoch: ',epoch,' loss: ',tr_loss/l,' acc: ',tr_acc/l)
+
+            print('Epoch: ',epoch,' loss: ',tr_loss/l,' acc: ',tr_acc/l)
             v_acc = 0
             v_loss = 0
             l = 0
@@ -110,12 +115,10 @@ class train:
                 inputs = inputs.type(torch.FloatTensor)
                 labels = labels.type(torch.FloatTensor)
                 outputs = self.model(inputs)
-                print("model computation")
                 if self.model_name=='cnn':
                     outputs = self.compare_with_embeddings(outputs)
-                print("comparison computation")
                 v_acc += self.measure_acc(outputs, labels)
-                v_loss += self.loss_fnc((outputs.squeeze()), labels.squeeze()).item()
+                v_loss += (self.loss_fnc1(outputs.squeeze(), labels.squeeze())+0.1*self.loss_fnc2(outputs.squeeze(), labels.squeeze())).item()
                 l += 1
             self.valid_loss += [v_loss / l]
             self.valid_acc += [v_acc / l]
