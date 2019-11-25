@@ -27,9 +27,11 @@ with open('FoodGramers.txt', 'r') as file:
 # data = instagram_data_set(batch_size=64,username_list=['therock\n'],num_per_user=100,recraw=False)
 data = instagram_data_set(batch_size=batch_size,username_list= u_list ,num_per_user=100,recraw=False, system="linux")
 ht.training(has_dict = True, iteration = 50)
+# A[2]
+
 train_loader, test_loader = data.train_loader, data.val_loader
 # train_model=train(cnn_out_dimention=len(data.all_hashtags),data=data,epochs=30,loss_function='CrossEntropy',model='cnn')
-train_model=alt_tr.train(cnn_out_dimention=embedding_dim,data=data,epochs=30,loss_function="cos",model='cnn', lr = learning_rate)
+train_model=alt_tr.train(cnn_out_dimention=embedding_dim,data=data,epochs=30,loss_function="MSELoss",model='cnn', lr = learning_rate)
 train_model.training()
 train_model.show_result()
 train_model.save_model()

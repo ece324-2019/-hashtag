@@ -18,10 +18,9 @@ class train:
         if loss_function=="MSELoss":
             self.loss_fnc = nn.MSELoss()
         if loss_function=="CrossEntropy":
-            self.loss_fnc = nn.functional.binary_cross_entropy_with_logits()
+            self.loss_fnc = nn.functional.binary_cross_entropy_with_logits
         if loss_function=="cos":
             self.loss_fuc = nn.CosineEmbeddingLoss()
-        print(nn.CosineEmbeddingLoss())
         self.model=CNN(output_dim=self.out_dimention)
         self.epochs=epochs
         self.data=data
@@ -42,16 +41,27 @@ class train:
             json_data.close()
     def measure_acc(self,outputs, labels):
         acc=0
+        # vec = self.gensim.similar_by_vector()
+        output_hot = torch.zeros(size=(1,labels.size()[1]))
+        for i in range (0, outputs.size()[0]):
+            temp = torch.zeros(size=(1,labels.size()[1]))
+            vec = self.gensim.similar_by_vector(outputs[i,:].detach().numpy(), topn=5)
+            for item in vec:
+                temp[0, int(self.word_to_id[item[0]])] = 1
+            output_hot = torch.cat((output_hot, temp), 0)
+        # print(output_hot.sum())
+        output_hot = output_hot[1:,:]
         for i in range(0, len(outputs)):
             tp = 0
             tn = 0
             fp = 0
             fn = 0
             beta=1
-            output=outputs[i].detach().numpy()
+
+            output=output_hot[i].detach().numpy()
             label=labels[i].squeeze().detach().numpy()
             acc_temp=0
-            for j in range(len(output)):
+            for j in range(len(output_hot)):
                 if (output[j]>0.5 and label[j]>0.5):
                     tp+=1
                 elif(output[j]<=0.5 and label[j]<=0.5):
@@ -61,7 +71,8 @@ class train:
                 elif(output[j]<=0.5 and label[j]>=0.5):
                     fn+=1
             # acc_temp=(1+beta*beta)*tp/((1+beta*beta)*tp+beta*beta*fn+fp + 0.00000001)
-            acc_temp=(tp+tn)/(tp+tn+fn+fp)
+            # acc_temp=(tp+tn)/(tp+tn+fn+fp)
+            acc_temp = tp / (tp + fp+ 0.00000001)
             acc+=acc_temp
         return acc/len(outputs)
     def compare_with_embeddings(self,outputs,hashtags):
@@ -78,22 +89,12 @@ class train:
                     outputs_copy[i, j] = torch.dot(outputs[i], embeddings[j])
         return outputs_copy
 
-    def measure_acc_alt(self, outputs, labels):
-        # output: size of [batch_size, embedding size], ideally should be the average embedding of a lot of vectors
-        # labels: size of [batch_size, vocab]
-        temp = outputs[0, :].squeeze()
-        # print(temp.size())
-        print(self.gensim.most_similar(temp))
-        print(self.gensim.most_similar_cosmul(temp))
-        print(self.gensim.wv[temp])
-        similarWords = self.gensim.most_similar_cosmul(positive=word)
-        for i in range(0, 5):
-            pass
 
 
 
     def process_label(self, labels): # labels is in shape of [batch, vocab]
         label = torch.zeros(self.out_dimention, 1)
+
         for i in range(0, labels.size()[0]):
             current = torch.zeros(self.out_dimention)
             for j in range(0, labels.size()[1]):
@@ -102,7 +103,15 @@ class train:
             label = torch.cat((label, current.reshape((self.out_dimention, 1))), dim=1)
         label = label.permute((1, 0))
         label = label[1:, :]
+        mean_original = labels.mean()
+        std_original = labels.std()
+
+        mean = label.mean()
+        std = label.std()
+        label = (label - mean)/std * std_original + mean_original
         return label
+
+
     def training(self):
         tr_loss = 0
         tr_acc = 0
