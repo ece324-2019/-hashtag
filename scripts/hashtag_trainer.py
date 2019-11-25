@@ -24,7 +24,6 @@ def evaluate(pos_score, neg_score):
     true_positive = (corr_pos.sum().item())
     tot_negative = corr_neg.size()[0] * corr_neg.size()[1]
     true_negative = corr_neg.sum().item()
-
     accuracy = (true_positive + true_negative)/(tot_positive + tot_negative)
     sensitivity = true_positive/(true_positive + tot_negative - true_negative + 0.0000001)
     f1 = 2*true_positive/(2*true_positive + tot_positive - true_positive + tot_negative - true_negative+ 0.0000001)
@@ -163,9 +162,8 @@ class Word2Vec:
         plt.show()
         return [iList, lossList, accuracy_i_list, accuracy_list, f1_list]
 
-def train_vectors():
-    w2v = Word2Vec(log_filename="./Data/hashtag_corpus.txt", output_filename="./Data/wordVectors.txt", embedding_dimension = 40, half_window_size=5, iteration=200)
-    w2v = Word2Vec(log_filename="./Data/hashtag_corpus.txt", output_filename="./Data/wordVectors.txt", embedding_dimension = 40, iteration=10)
+def train_vectors(iteration=10):
+    w2v = Word2Vec(log_filename="./Data/hashtag_corpus.txt", output_filename="./Data/wordVectors.txt", embedding_dimension = 40, half_window_size=5, iteration=iteration)
     w2v.train()
 def hyper_search():
     embedding_size = [20, 40, 100, 300]
@@ -203,7 +201,8 @@ if __name__ == '__main__':
     train_vectors()
     generate_dict_of_hashtag()
 # call this to run all the functions related to hashtag training
-def training():
-    gen_corpus()
-    train_vectors()
-    generate_dict_of_hashtag()
+def training(has_dict, iteration=10):
+    if not has_dict:
+        gen_corpus()
+        train_vectors(iteration=iteration)
+        generate_dict_of_hashtag()
