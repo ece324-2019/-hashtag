@@ -115,11 +115,11 @@ class CNN(nn.Module):
         self.fc1 = nn.Linear(kernel_num * 9 * 9, fc1_num) # takes in 12 x 12 images
         self.fc2 = nn.Linear(fc1_num, output_dim) # output Layer
     def forward(self, input):
-        x = (F.relu(self.maxpool(self.conv1(input))))
-        x = (F.relu(self.maxpool(self.conv2(x))))
-        x = (F.relu(self.maxpool(self.conv3(x))))
-        x = (F.relu(self.maxpool(self.conv4(x))))
+        x = (F.leaky_relu(self.maxpool(self.conv1(input))))
+        x = (F.leaky_relu(self.maxpool(self.conv2(x))))
+        x = (F.leaky_relu(self.maxpool(self.conv3(x))))
+        x = (F.leaky_relu(self.maxpool(self.conv4(x))))
         x = x.view(-1, 10 * 9 * 9)
-        x = (F.relu(self.fc1(x)))
+        x = ((self.fc1(x)))
         x = torch.sigmoid(self.fc2(x))
         return x
