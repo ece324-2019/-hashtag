@@ -5,23 +5,19 @@ import shutil
 from PIL import Image
 import numpy as np
 import torch.utils.data as data
-from torchvision import transforms
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
+from matplotlib import  pyplot
 class Instagram_Dataset(data.Dataset):
-    def __init__(self, X, y, transform = None):
+    def __init__(self, X, y):
         self.data=X
         self.label=y
-        self.transform = transform
+        self.transform = None
     def __len__(self):
         return len(self.data)
     def __getitem__(self, index):
         x = self.data[index]
         y = self.label[index]
-        if self.transform:
-            x = np.transpose(x, (1,2,0))
-            x = self.transform(np.uint8(x))
-        # print(x.size())
         return x,y
 class instagram_data_set:
     def __init__(self,batch_size,username_list,num_per_user,num_user=0,recraw=True,system='windows'):
@@ -98,16 +94,14 @@ class instagram_data_set:
         array_image=np.array([])
         labels = np.array([])
         i=0;
-        mean = 0
         for local_file_name,hashtag_list in self.all_images.items():
-            im_file = Image.open(local_file_name)
-            im = np.array(im_file,dtype=float)
-            im_file.close()
+            im = Image.open(local_file_name)
+            im = np.array(im,dtype=float)
             im = np.reshape(im,(3,200,200))
-            # im -= im.mean(2).mean(1).mean(0)
-            # if (np.reshape(im, (-1)).std()==0):
-            #     continue
-            # im /= np.reshape(im, (-1)).std()
+            im -= im.mean(2).mean(1).mean(0)
+            if (np.reshape(im, (-1)).std()==0):
+                continue
+            im /= np.reshape(im, (-1)).std()
             label = np.zeros((1,len(self.all_hashtags.values())))
             for hashtag in hashtag_list:
                 label[0,self.all_hashtags[hashtag]]=1;
@@ -117,34 +111,42 @@ class instagram_data_set:
             else:
                 array_image=np.concatenate((array_image, np.array([im])), axis=0)
                 labels=np.concatenate((labels, np.array([label])), axis=0)
-            print(i)
-            i=i+1
-        train_data, test_and_valid_data, train_label, test_and_valid_data_label = train_test_split(array_image, labels,
-                                                                              test_size=0.3,
+            i=1
+        train_data, test_data, train_label, test_label = train_test_split(array_image, labels,
+                                                                              test_size=0.2,
                                                                               random_state=0)
-        valid_data, test_data, valid_label, test_label = train_test_split(test_and_valid_data, test_and_valid_data_label,
-                                                                              test_size=0.5,
-                                                                              random_state=0)
-        means = [0, 0, 0]
-        stds = [0, 0, 0]
-        for i in range(0, 3):
-            means[i] = np.mean(array_image[:, :, :, i]) / 255
-            stds[i] = np.std(array_image[:, :, :, i]) / 255
-        image_Trainsform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
-            transforms.ToTensor(),
-            transforms.Normalize(means, stds)
-        ])
+        train_data_set = Instagram_Dataset(train_data, train_label)
+        print(array_image.shape)
         print("Mean:", array_image.mean(), "Std", array_image.std())
-        # generate dataset objects
-        train_data_set = Instagram_Dataset(train_data, train_label, transform=image_Trainsform)
-        valid_data_set = Instagram_Dataset(valid_data, valid_label, transform=image_Trainsform)
-        test_data_set = Instagram_Dataset(test_data, test_label, transform=image_Trainsform)
+        test_data_set = Instagram_Dataset(test_data, test_label)
         self.train_loader = DataLoader(train_data_set, batch_size=batch_size, shuffle=True)
-        self.val_loader = DataLoader(valid_data_set, batch_size=len(valid_data_set), shuffle=True)
-        self.test_loader = DataLoader(test_data_set, batch_size=len(test_data_set), shuffle=True)
+        self.val_loader = DataLoader(test_data_set, batch_size=len(test_data_set), shuffle=True)
+def show_stats():
+    temp=[]
+    with open('hashtags.json','r') as hashtag_file:
+        all_hashtags=json.load(hashtag_file)
+    with open('images.json','r') as image_file:
+        all_images=json.load(image_file)
+    for i in all_images.values():
+        temp+=i
+    hash_count=[]
+    for hashtag in all_hashtags.keys():
+        hash_count+=[temp.count(hashtag)]
+    temp=[]
+    for i in all_images.values():
+        temp += [len(i)]
+    pyplot.plot(np.sort(np.array(hash_count)), label="# of occurrences")
+    pyplot.title("hashtag occurrences")
+    pyplot.ylabel("occurrences")
+    pyplot.xlabel("hashtag")
+    pyplot.show()
+    pyplot.plot(np.sort(np.array(temp)), label="# of hashtags per image")
+    pyplot.title("# of hashtags per image")
+    pyplot.ylabel("# of hashtags")
+    pyplot.xlabel("image")
+    pyplot.show()
 
 #with open('FoodGramers.txt', 'r') as file:
-#    u_list = file.readlines()
+#   u_list = file.readlines()
 #data=instagram_data_set(batch_size=64,username_list=u_list,num_per_user=50,recraw=False)
+#show_stats()
