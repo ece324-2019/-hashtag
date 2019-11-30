@@ -104,8 +104,10 @@ class train:
         print("Start training")
         if torch.cuda.is_available():
             torch.set_default_tensor_type(torch.cuda.FloatTensor)
+            print("using GPU")
         if torch.cuda.is_available():
             self.model.cuda()
+            print("using GPU")
         tr_loss = 0
         tr_acc = 0
         v_f1 = 0
@@ -159,7 +161,7 @@ class train:
     def show_result(self):
         print("train acc: ", self.train_acc[-1], "train loss", self.train_loss[-1])
         print("validate acc: ", self.valid_acc[-1], "validate loss", self.valid_loss[-1])
-        print(self.train_acc[-1], self.valid_acc[-1])
+        print("train f1: ", self.train_f1[-1], "valid f1: ", self.valid_f1[-1])
         print('Finished Training')
         pyplot.plot(np.array(self.train_loss), label="training set")
         pyplot.title("Loss vs Epochs")
@@ -191,7 +193,7 @@ class train:
         pyplot.legend(loc='lower right')
         pyplot.xlabel("Epoch")
         pyplot.show()
-        pyplot.plot(np.array(self.valid_acc), label="validation set")
+        pyplot.plot(np.array(self.valid_f1), label="validation set")
         pyplot.title("F1 Score vs Epochs")
         pyplot.ylabel("F1 Score")
         pyplot.legend(loc='lower right')

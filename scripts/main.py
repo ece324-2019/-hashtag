@@ -17,6 +17,8 @@ from access_word_vector import *
 from train import train
 import cnn_train_alternative as alt_tr
 import hashtag_trainer as ht
+import torch
+
 
 batch_size=100
 num_epoch=50
@@ -35,7 +37,7 @@ train_loader, test_loader = data.train_loader, data.val_loader
 # train_model.show_result()
 
 
-train_model=train(data=data,epochs=20,loss_function='KLDivLoss',model='cnn',lr=0.00005)
+train_model=train(data=data,epochs=20,loss_function='KLDivLoss',model='baseline',lr=0.00005)
 train_model.training()
 train_model.save_model()
 train_model.show_result()
