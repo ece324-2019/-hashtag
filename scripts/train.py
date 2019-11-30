@@ -73,7 +73,7 @@ class train:
             tn = 0
             fp = 0
             fn = 0
-            beta=3
+            beta=2
             output=outputs[i].detach().numpy()
             label=labels[i].squeeze().detach().numpy()
             acc_temp=0
@@ -102,12 +102,15 @@ class train:
 
     def training(self):
         print("Start training")
-        if torch.cuda.is_available():
-            torch.set_default_tensor_type(torch.cuda.FloatTensor)
-            print("using GPU")
-        if torch.cuda.is_available():
-            self.model.cuda()
-            print("using GPU")
+        # if torch.cuda.is_available():
+        #     torch.set_default_tensor_type(torch.cuda.FloatTensor)
+        #     print("using GPU")
+        # if torch.cuda.is_available():
+        #     self.model.cuda()
+        #     print("using GPU")
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        print(device)
+        self.model.to(device)
         tr_loss = 0
         tr_acc = 0
         v_f1 = 0
@@ -118,8 +121,8 @@ class train:
             l = 0
             for i, batch in enumerate(self.data.train_loader):
                 inputs, labels=batch
-                inputs = inputs.type(torch.float32)
-                labels = labels.type(torch.float32)
+                inputs = inputs.type(torch.float32).to(device)
+                labels = labels.type(torch.float32).to(device)
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs)
                 #print("model computation")
