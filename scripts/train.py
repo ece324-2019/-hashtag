@@ -16,7 +16,8 @@ class train:
         if model=='baseline':
             self.out_dimension=len(data.all_hashtags)
         if loss_function=="MSELoss":
-            self.loss_fnc=nn.MSELoss()
+            self.loss_fnc1=nn.MSELoss()
+            self.loss_fnc2=nn.MSELoss()
         if loss_function=="KLDivLoss":
             self.loss_fnc1=nn.KLDivLoss()
             self.loss_fnc2 = nn.BCEWithLogitsLoss()
@@ -29,6 +30,11 @@ class train:
         self.train_loss = []
         self.valid_acc = []
         self.valid_loss = []
+        self.train_tp =[]
+        self.train_fp =[]
+        self.train_tn =[]
+        self.train_fn =[]
+
         self.optimizer=optim.Adam(self.model.parameters(), lr=lr)
         if model=='cnn':
             hashtags_dic=ht.generate_dict_of_hashtag()
@@ -46,7 +52,7 @@ class train:
             tn = 0
             fp = 0
             fn = 0
-            beta=3
+            beta=2
             output=outputs[i].detach().numpy()
             label=labels[i].squeeze().detach().numpy()
             acc_temp=0
@@ -60,10 +66,10 @@ class train:
                 elif(output[j]<=0.5 and label[j]>=0.5):
                     fn+=1
             acc_temp=(tp*(1+beta*beta))/(tp*(1+beta*beta)+beta*fp+fn)
-            #cc_temp=(tp+tn)/(tp+tn+fn+fp)
+            #acc_temp=(tp+tn)/(tp+tn+fn+fp)
             acc+=acc_temp
         print(tp,fp,tn,fn)
-        return acc/len(outputs)
+        return acc/len(outputs),tp,fp,tn,fn
 
     def compare_with_embeddings(self,outputs):
         outputs_copy=torch.zeros([len(outputs),self.l])
@@ -84,6 +90,10 @@ class train:
         for epoch in range(self.epochs):
             tr_loss = 0
             tr_acc = 0
+            tr_tp = 0
+            tr_fp = 0
+            tr_tn =0
+            tr_fn =0
             l = 0
             for i, batch in enumerate(self.data.train_loader):
                 inputs, labels=batch
@@ -96,15 +106,24 @@ class train:
                     outputs=self.compare_with_embeddings(outputs)
                 #print("comparison computation")
 
-                loss = self.loss_fnc1(outputs.squeeze(), labels.squeeze())+self.loss_fnc2(outputs.squeeze(), labels.squeeze())*0.1
+                loss = 1*self.loss_fnc1(outputs.squeeze(), labels.squeeze())+self.loss_fnc2(outputs.squeeze(), labels.squeeze())*0.1
                 loss.backward()
                 self.optimizer.step()
 
-                tr_acc += self.measure_acc(outputs, labels)
+                temp=self.measure_acc(outputs, labels)
+                tr_acc += temp[0]
+                tr_tp += temp[1]
+                tr_fp += temp[2]
+                tr_tn += temp[3]
+                tr_fn += temp[4]
                 tr_loss += loss.item()
                 l += 1
             self.train_acc += [tr_acc / l]
             self.train_loss += [tr_loss / l]
+            self.train_tp += [tr_tp / l]
+            self.train_fp += [tr_fp / l]
+            self.train_tn += [tr_tn / l]
+            self.train_fn += [tr_fn / l]
 
             print('Epoch: ',epoch,' loss: ',tr_loss/l,' acc: ',tr_acc/l)
             v_acc = 0
@@ -117,8 +136,8 @@ class train:
                 outputs = self.model(inputs)
                 if self.model_name=='cnn':
                     outputs = self.compare_with_embeddings(outputs)
-                v_acc += self.measure_acc(outputs, labels)
-                v_loss += (self.loss_fnc1(outputs.squeeze(), labels.squeeze())+0.11*self.loss_fnc2(outputs.squeeze(), labels.squeeze())).item()
+                v_acc += self.measure_acc(outputs, labels)[0]
+                v_loss += 1*(self.loss_fnc1(outputs.squeeze(), labels.squeeze())+0.1*self.loss_fnc2(outputs.squeeze(), labels.squeeze())).item()
                 l += 1
             self.valid_loss += [v_loss / l]
             self.valid_acc += [v_acc / l]
@@ -135,8 +154,8 @@ class train:
         pyplot.xlabel("Epoch")
         pyplot.show()
         pyplot.plot(np.array(self.train_acc), label="training set")
-        pyplot.title("Accuracy vs Epochs")
-        pyplot.ylabel("Accuracy")
+        pyplot.title("F2 vs Epochs")
+        pyplot.ylabel("F2")
         pyplot.legend(loc='lower right')
         pyplot.xlabel("Epoch")
         pyplot.show()
@@ -147,8 +166,32 @@ class train:
         pyplot.xlabel("Epoch")
         pyplot.show()
         pyplot.plot(np.array(self.valid_acc), label="validation set")
-        pyplot.title("Accuracy vs Epochs")
-        pyplot.ylabel("Accuracy")
+        pyplot.title("F2 vs Epochs")
+        pyplot.ylabel("F2")
+        pyplot.legend(loc='lower right')
+        pyplot.xlabel("Epoch")
+        pyplot.show()
+        pyplot.plot(np.array(self.train_tp), label="train TP")
+        pyplot.title("TP vs Epochs")
+        pyplot.ylabel("TP")
+        pyplot.legend(loc='lower right')
+        pyplot.xlabel("Epoch")
+        pyplot.show()
+        pyplot.plot(np.array(self.train_fp), label="train FP")
+        pyplot.title("FP vs Epochs")
+        pyplot.ylabel("FP")
+        pyplot.legend(loc='lower right')
+        pyplot.xlabel("Epoch")
+        pyplot.show()
+        pyplot.plot(np.array(self.train_tn), label="train TN")
+        pyplot.title("TN vs Epochs")
+        pyplot.ylabel("TN")
+        pyplot.legend(loc='lower right')
+        pyplot.xlabel("Epoch")
+        pyplot.show()
+        pyplot.plot(np.array(self.train_fn), label="train FN")
+        pyplot.title("FN vs Epochs")
+        pyplot.ylabel("FN")
         pyplot.legend(loc='lower right')
         pyplot.xlabel("Epoch")
         pyplot.show()

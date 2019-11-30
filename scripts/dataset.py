@@ -7,6 +7,7 @@ import numpy as np
 import torch.utils.data as data
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
+from matplotlib import  pyplot
 class Instagram_Dataset(data.Dataset):
     def __init__(self, X, y):
         self.data=X
@@ -120,7 +121,32 @@ class instagram_data_set:
         test_data_set = Instagram_Dataset(test_data, test_label)
         self.train_loader = DataLoader(train_data_set, batch_size=batch_size, shuffle=True)
         self.val_loader = DataLoader(test_data_set, batch_size=len(test_data_set), shuffle=True)
+def show_stats():
+    temp=[]
+    with open('hashtags.json','r') as hashtag_file:
+        all_hashtags=json.load(hashtag_file)
+    with open('images.json','r') as image_file:
+        all_images=json.load(image_file)
+    for i in all_images.values():
+        temp+=i
+    hash_count=[]
+    for hashtag in all_hashtags.keys():
+        hash_count+=[temp.count(hashtag)]
+    temp=[]
+    for i in all_images.values():
+        temp += [len(i)]
+    pyplot.plot(np.sort(np.array(hash_count)), label="# of occurrences")
+    pyplot.title("hashtag occurrences")
+    pyplot.ylabel("occurrences")
+    pyplot.xlabel("hashtag")
+    pyplot.show()
+    pyplot.plot(np.sort(np.array(temp)), label="# of hashtags per image")
+    pyplot.title("# of hashtags per image")
+    pyplot.ylabel("# of hashtags")
+    pyplot.xlabel("image")
+    pyplot.show()
 
 #with open('FoodGramers.txt', 'r') as file:
-#    u_list = file.readlines()
+#   u_list = file.readlines()
 #data=instagram_data_set(batch_size=64,username_list=u_list,num_per_user=50,recraw=False)
+#show_stats()
