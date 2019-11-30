@@ -159,7 +159,7 @@ class Word2Vec:
         plt.ylabel("f1 score")
         plt.xlabel("batch")
         plt.legend()
-        plt.show()
+        # plt.show()
         return [iList, lossList, accuracy_i_list, accuracy_list, f1_list]
 
 def train_vectors(iteration=10):
