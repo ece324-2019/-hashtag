@@ -14,6 +14,8 @@ from torchvision import models
 class train:
     def __init__(self,data,loss_function='MSELoss',model='cnn',lr=0.001,epochs=100):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if torch.cuda.is_available():
+            torch.set_default_tensor_type(torch.cuda.FloatTensor)
         if model=='cnn' or model=='transfer':
             self.out_dimension=40
         if model=='baseline':
