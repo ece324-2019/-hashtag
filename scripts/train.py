@@ -60,6 +60,12 @@ class train:
             for param in self.model.parameters():
                 param.requires_grad = False
             self.model.fc = nn.Linear(num_ftrs, self.out_dimension)
+        if model == 'baseline':
+            self.model = models.resnet50(pretrained=True)
+            num_ftrs = self.model.fc.in_features
+            for param in self.model.parameters():
+                param.requires_grad = False
+            self.model.fc = nn.Linear(num_ftrs, self.out_dimension)
 
         self.model.to(self.device)
 
@@ -123,7 +129,8 @@ class train:
         for i in range(len(outputs)):
             outputs_copy[i]=nn.functional.cosine_similarity(outputs[i],self.embeddings.to(device=self.device),dim=-1)
         #outputs_copy=nn.functional.leaky_relu(outputs_copy*2,0.01)
-        outputs_copy=torch.sigmoid(outputs_copy)
+        # outputs_copy=torch.sigmoid(outputs_copy)
+        outputs_copy=torch.relu(outputs_copy)
         return outputs_copy
 
     def training(self):
