@@ -59,6 +59,8 @@ class train:
         self.model.to(self.device)
 
     def measure_acc(self,outputs, labels):
+        outputs = outputs.cpu()
+        labels = labels.cpu()
         acc=0
         for i in range(0, len(outputs)):
             tp = 0
@@ -84,6 +86,8 @@ class train:
         print(tp,fp,tn,fn)
         return acc/len(outputs)
     def measure_f1(self,outputs, labels):
+        outputs = outputs.cpu()
+        labels = labels.cpu()
         acc=0
         for i in range(0, len(outputs)):
             tp = 0
