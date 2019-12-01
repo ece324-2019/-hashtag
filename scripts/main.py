@@ -15,7 +15,11 @@ from model import *
 from dataset import *
 from train import train
 import hashtag_trainer as ht
-
+import torch
+if torch.cuda.is_available():
+    print("True")
+else:
+    print("no GPU")
 batch_size=100
 num_epoch=50
 learning_rate=0.001

@@ -9,9 +9,13 @@ from model import *
 from dataset import *
 from access_word_vector import *
 import hashtag_trainer as ht
+from torchvision import models
+
 class train:
     def __init__(self,data,loss_function='MSELoss',model='cnn',lr=0.001,epochs=100):
-        if model=='cnn':
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
+        if model=='cnn' or model=='transfer':
             self.out_dimension=40
         if model=='baseline':
             self.out_dimension=len(data.all_hashtags)
@@ -41,6 +45,18 @@ class train:
                     self.data.all_hashtags[key]=np.zeros(self.out_dimension)
             self.embeddings = torch.tensor(np.asarray(list(self.data.all_hashtags.values())))
             self.embeddings=self.embeddings.type(torch.float32)
+        if model == 'transfer':
+            hashtags_dic = ht.generate_dict_of_hashtag()
+            for key in self.data.all_hashtags.keys():
+                try:
+                    self.data.all_hashtags[key] = hashtags_dic[key]
+                except:
+                    self.data.all_hashtags[key] = np.zeros(self.out_dimension)
+            self.embeddings = torch.tensor(np.asarray(list(self.data.all_hashtags.values())))
+            self.embeddings = self.embeddings.type(torch.float32)
+            self.model = models.resnet50(True)
+
+
     def measure_acc(self,outputs, labels):
         acc=0
         for i in range(0, len(outputs)):
@@ -95,7 +111,7 @@ class train:
     def compare_with_embeddings(self,outputs):
         outputs_copy=torch.zeros([len(outputs),self.l])
         for i in range(len(outputs)):
-            outputs_copy[i]=nn.functional.cosine_similarity(outputs[i],self.embeddings,dim=-1)
+            outputs_copy[i]=nn.functional.cosine_similarity(outputs[i],self.embeddings.to(device=self.device),dim=-1)
         #outputs_copy=nn.functional.leaky_relu(outputs_copy*2,0.01)
         outputs_copy=torch.sigmoid(outputs_copy)
         return outputs_copy
@@ -108,8 +124,7 @@ class train:
         # if torch.cuda.is_available():
         #     self.model.cuda()
         #     print("using GPU")
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        print(device)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(device)
         tr_loss = 0
         tr_acc = 0
