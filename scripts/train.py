@@ -55,7 +55,12 @@ class train:
                     self.data.all_hashtags[key] = np.zeros(self.out_dimension)
             self.embeddings = torch.tensor(np.asarray(list(self.data.all_hashtags.values())))
             self.embeddings = self.embeddings.type(torch.float32)
-            self.model = models.resnet50(True)
+            self.model = models.resnet50(pretrained=True)
+            num_ftrs = self.model.fc.in_features
+            for param in self.model.parameters():
+                param.requires_grad = False
+            self.model.fc = nn.Linear(num_ftrs, self.out_dimension)
+
         self.model.to(self.device)
 
     def measure_acc(self,outputs, labels):
@@ -144,8 +149,9 @@ class train:
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs).to(self.device)
                 #print("model computation")
-                if self.model_name=='cnn':
+                if self.model_name=='cnn' or self.model_name == "transfer":
                     outputs=self.compare_with_embeddings(outputs)
+
                 #print("comparison computation")
 
                 loss = self.loss_fnc1(outputs.squeeze(), labels.squeeze())+self.loss_fnc2(outputs.squeeze(), labels.squeeze())*0.1
@@ -169,7 +175,7 @@ class train:
                 inputs = inputs.type(torch.FloatTensor).to(self.device)
                 labels = labels.type(torch.FloatTensor).to(self.device)
                 outputs = self.model(inputs).to(self.device)
-                if self.model_name=='cnn':
+                if self.model_name=='cnn' or self.model_name == "transfer":
                     outputs = self.compare_with_embeddings(outputs).to(self.device)
                 v_acc += self.measure_acc(outputs, labels)
                 v_f1 += self.measure_f1(outputs, labels)
