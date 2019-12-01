@@ -20,14 +20,15 @@ batch_size=100
 num_epoch=50
 learning_rate=0.001
 embedding_dim=40
-#ht.training()
+path = "./Output/"
+ht.training()
 print("Start preparing data")
 with open('FoodGramers.txt', 'r') as file:
     u_list = file.readlines()
 data=instagram_data_set(batch_size=64,username_list=u_list,num_per_user=3,recraw=False)
 print("data processed")
 train_loader, test_loader = data.train_loader, data.val_loader
-train_model=train(data=data,epochs=50,loss_function='KLDivLoss',model='transfer',lr=0.00001)
+train_model=train(data=data,epochs=50,loss_function='KLDivLoss',model='baseline',lr=0.00001)
 train_model.training()
-train_model.show_result()
-train_model.save_model()
+train_model.show_result(folder_path=path)
+train_model.save_model(folder_path=path)

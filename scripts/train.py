@@ -10,7 +10,62 @@ from dataset import *
 from access_word_vector import *
 import hashtag_trainer as ht
 from torchvision import models
+from sklearn.metrics import confusion_matrix
+from sklearn.utils.multiclass import unique_labels
 
+def plot_confusion_matrix(y_true, y_pred, classes,
+                          normalize=False,
+                          title=None,
+                          cmap=pyplot.cm.Blues):
+    """
+    This function prints and plots the confusion matrix.
+    Normalization can be applied by setting `normalize=True`.
+    """
+    if not title:
+        if normalize:
+            title = 'Normalized confusion matrix'
+        else:
+            title = 'Confusion matrix, without normalization'
+    y_true = y_true.cpu().detach().numpy().round()
+    y_pred = ((y_pred.cpu().detach().numpy() > 0.5) * 1).round()
+    # Compute confusion matrix
+    cm = confusion_matrix(y_true, y_pred)
+    # Only use the labels that appear in the data
+    classes = classes[unique_labels(y_true, y_pred)]
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        print("Normalized confusion matrix")
+    else:
+        print('Confusion matrix, without normalization')
+
+    print(cm)
+
+    fig, ax = pyplot.subplots()
+    im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
+    ax.figure.colorbar(im, ax=ax)
+    # We want to show all ticks...
+    ax.set(xticks=np.arange(cm.shape[1]),
+           yticks=np.arange(cm.shape[0]),
+           # ... and label them with the respective list entries
+           xticklabels=classes, yticklabels=classes,
+           title=title,
+           ylabel='True label',
+           xlabel='Predicted label')
+
+    # Rotate the tick labels and set their alignment.
+    pyplot.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+
+    # Loop over data dimensions and create text annotations.
+    fmt = '.2f' if normalize else 'd'
+    thresh = cm.max() / 2.
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            ax.text(j, i, format(cm[i, j], fmt),
+                    ha="center", va="center",
+                    color="white" if cm[i, j] > thresh else "black")
+    fig.tight_layout()
+    return ax
 class train:
     def __init__(self,data,loss_function='MSELoss',model='cnn',lr=0.001,epochs=100):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -129,8 +184,8 @@ class train:
         for i in range(len(outputs)):
             outputs_copy[i]=nn.functional.cosine_similarity(outputs[i],self.embeddings.to(device=self.device),dim=-1)
         #outputs_copy=nn.functional.leaky_relu(outputs_copy*2,0.01)
-        # outputs_copy=torch.sigmoid(outputs_copy)
-        outputs_copy=torch.relu(outputs_copy)
+        outputs_copy=torch.sigmoid(10*outputs_copy)
+        # outputs_copy=torch.relu(outputs_copy)
         return outputs_copy
 
     def training(self):
@@ -192,7 +247,7 @@ class train:
             self.valid_acc += [v_acc / l]
             self.valid_f1 += [v_f1 / l]
         pass
-    def show_result(self):
+    def show_result(self, folder_path = "./"):
         print("train acc: ", self.train_acc[-1], "train loss", self.train_loss[-1])
         print("validate acc: ", self.valid_acc[-1], "validate loss", self.valid_loss[-1])
         print("train f1: ", self.train_f1[-1], "valid f1: ", self.valid_f1[-1])
@@ -202,36 +257,42 @@ class train:
         pyplot.ylabel("Loss")
         pyplot.legend(loc='upper right')
         pyplot.xlabel("Epoch")
+        pyplot.savefig(folder_path + "Training_loss")
         pyplot.show()
         pyplot.plot(np.array(self.train_f1), label="training set")
         pyplot.title("F1 Score vs Epochs")
         pyplot.ylabel("F1 Score")
         pyplot.legend(loc='lower right')
         pyplot.xlabel("Epoch")
+        pyplot.savefig(folder_path + "Training_F1")
         pyplot.show()
         pyplot.plot(np.array(self.train_acc), label="training set")
         pyplot.title("Accuracy vs Epochs")
         pyplot.ylabel("Accuracy")
         pyplot.legend(loc='lower right')
         pyplot.xlabel("Epoch")
+        pyplot.savefig(folder_path + "Training_accuracy")
         pyplot.show()
         pyplot.plot(np.array(self.valid_loss), label="validation set")
         pyplot.title("Loss vs Epochs")
         pyplot.ylabel("Loss")
         pyplot.legend(loc='upper right')
         pyplot.xlabel("Epoch")
+        pyplot.savefig(folder_path + "validation_loss")
         pyplot.show()
         pyplot.plot(np.array(self.valid_acc), label="validation set")
         pyplot.title("Accuracy vs Epochs")
         pyplot.ylabel("Accuracy")
         pyplot.legend(loc='lower right')
         pyplot.xlabel("Epoch")
+        pyplot.savefig(folder_path + "validation_accuracy")
         pyplot.show()
         pyplot.plot(np.array(self.valid_f1), label="validation set")
         pyplot.title("F1 Score vs Epochs")
         pyplot.ylabel("F1 Score")
         pyplot.legend(loc='lower right')
         pyplot.xlabel("Epoch")
+        pyplot.savefig(folder_path + "validation_f1")
         pyplot.show()
-    def save_model(self):
-        torch.save(self.model, 'model_'+self.model_name+'.pt')
+    def save_model(self, folder_path = './'):
+        torch.save(self.model, folder_path+'model_'+self.model_name+'.pt')
