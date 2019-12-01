@@ -123,8 +123,6 @@ class train:
         # if torch.cuda.is_available():
         #     self.model.cuda()
         #     print("using GPU")
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model.to(device)
         tr_loss = 0
         tr_acc = 0
         v_f1 = 0
@@ -135,10 +133,10 @@ class train:
             l = 0
             for i, batch in enumerate(self.data.train_loader):
                 inputs, labels=batch
-                inputs = inputs.type(torch.float32).to(device)
-                labels = labels.type(torch.float32).to(device)
+                inputs = inputs.type(torch.float32).to(self.device)
+                labels = labels.type(torch.float32).to(self.device)
                 self.optimizer.zero_grad()
-                outputs = self.model(inputs)
+                outputs = self.model(inputs).to(self.device)
                 #print("model computation")
                 if self.model_name=='cnn':
                     outputs=self.compare_with_embeddings(outputs)
@@ -162,11 +160,11 @@ class train:
             l = 0
             for j, batch in enumerate(self.data.val_loader):
                 inputs, labels=batch
-                inputs = inputs.type(torch.FloatTensor)
-                labels = labels.type(torch.FloatTensor)
-                outputs = self.model(inputs)
+                inputs = inputs.type(torch.FloatTensor).to(self.device)
+                labels = labels.type(torch.FloatTensor).to(self.device)
+                outputs = self.model(inputs).to(self.device)
                 if self.model_name=='cnn':
-                    outputs = self.compare_with_embeddings(outputs)
+                    outputs = self.compare_with_embeddings(outputs).to(self.device)
                 v_acc += self.measure_acc(outputs, labels)
                 v_f1 += self.measure_f1(outputs, labels)
                 v_loss += (self.loss_fnc1(outputs.squeeze(), labels.squeeze())+0.11*self.loss_fnc2(outputs.squeeze(), labels.squeeze())).item()
