@@ -14,7 +14,6 @@ from torchvision import models
 class train:
     def __init__(self,data,loss_function='MSELoss',model='cnn',lr=0.001,epochs=100):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model.to(self.device)
         if model=='cnn' or model=='transfer':
             self.out_dimension=40
         if model=='baseline':
@@ -55,7 +54,7 @@ class train:
             self.embeddings = torch.tensor(np.asarray(list(self.data.all_hashtags.values())))
             self.embeddings = self.embeddings.type(torch.float32)
             self.model = models.resnet50(True)
-
+        self.model.to(self.device)
 
     def measure_acc(self,outputs, labels):
         acc=0
